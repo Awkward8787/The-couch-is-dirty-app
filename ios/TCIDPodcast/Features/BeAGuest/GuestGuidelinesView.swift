@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct GuestGuidelinesView: View {
+    @Environment(\.openURL) private var openURL
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -51,16 +52,26 @@ struct GuestGuidelinesView: View {
                     }
                     .accessibilityHint("Dismisses guest guidelines")
 
-                    Text("Contact: \(MailHelper.guestEmail)")
-                        .font(TCIDTypography.caption)
-                        .foregroundStyle(TCIDColors.textSecondary)
-                        .padding(.bottom, TCIDSpacing.xl)
+                    Button {
+                        openContactEmail()
+                    } label: {
+                        Text("Contact: \(MailHelper.guestEmail)")
+                            .font(TCIDTypography.caption)
+                            .foregroundStyle(TCIDColors.accent)
+                    }
+                    .accessibilityLabel("Email \(MailHelper.guestEmail)")
+                    .padding(.bottom, TCIDSpacing.xl)
                 }
                 .padding(.horizontal, TCIDSpacing.md)
             }
         }
         .navigationTitle("Guidelines")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func openContactEmail() {
+        guard let url = MailHelper.generalInquiryURL() else { return }
+        openURL(url)
     }
 }
 

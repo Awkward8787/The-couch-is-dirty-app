@@ -1,7 +1,7 @@
 import Foundation
 
 enum MailHelper {
-    static let guestEmail = "info@tcidpodcast.com"
+    static var guestEmail: String { AppConfig.guestEmail }
 
     static func guestApplicationURL(format: GuestAppearanceType?) -> URL? {
         var components = URLComponents()

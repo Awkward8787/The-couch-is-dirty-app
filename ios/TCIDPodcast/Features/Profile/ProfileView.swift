@@ -40,6 +40,7 @@ struct ProfileView: View {
                             } label: {
                                 profileRowLabel("Be a Guest", icon: "mic.fill", accent: true)
                             }
+                            .buttonStyle(.plain)
 
                             Divider().background(TCIDColors.border)
 

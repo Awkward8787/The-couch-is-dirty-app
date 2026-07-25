@@ -2,7 +2,6 @@ import SwiftUI
 
 struct BeAGuestFormatDetailView: View {
     @Environment(\.openURL) private var openURL
-    @Environment(\.dismiss) private var dismiss
 
     let format: GuestAppearanceType
 
@@ -68,11 +67,16 @@ struct BeAGuestFormatDetailView: View {
                         .foregroundStyle(TCIDColors.textSecondary)
                         .multilineTextAlignment(.center)
 
-                    Text("Questions? \(MailHelper.guestEmail)")
-                        .font(TCIDTypography.caption)
-                        .foregroundStyle(TCIDColors.accent)
-                        .multilineTextAlignment(.center)
-                        .padding(.bottom, TCIDSpacing.xl)
+                    Button {
+                        openGeneralEmail()
+                    } label: {
+                        Text("Questions? \(MailHelper.guestEmail)")
+                            .font(TCIDTypography.caption)
+                            .foregroundStyle(TCIDColors.accent)
+                            .multilineTextAlignment(.center)
+                    }
+                    .accessibilityLabel("Email \(MailHelper.guestEmail) with questions")
+                    .padding(.bottom, TCIDSpacing.xl)
                 }
                 .padding(.horizontal, TCIDSpacing.md)
             }
@@ -82,6 +86,11 @@ struct BeAGuestFormatDetailView: View {
 
     private func applyNow() {
         guard let url = MailHelper.guestApplicationURL(format: format) else { return }
+        openURL(url)
+    }
+
+    private func openGeneralEmail() {
+        guard let url = MailHelper.generalInquiryURL() else { return }
         openURL(url)
     }
 }

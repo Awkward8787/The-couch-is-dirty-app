@@ -217,12 +217,7 @@ private struct GuestExpectationRow: View {
                     .foregroundStyle(TCIDColors.textSecondary)
             }
 
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(TCIDColors.textSecondary.opacity(0.5))
-                .accessibilityHidden(true)
+            Spacer(minLength: 0)
         }
         .padding(TCIDSpacing.md)
         .background(TCIDColors.card)
