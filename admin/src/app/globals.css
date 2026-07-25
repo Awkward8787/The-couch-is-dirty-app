@@ -1,0 +1,24 @@
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #1c1c1e;
+  --accent: #eb1c24;
+  --muted: #8e8e93;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+a {
+  color: var(--accent);
+}

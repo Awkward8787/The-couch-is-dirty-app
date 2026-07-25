@@ -1,0 +1,42 @@
+# See https://help.github.com/articles/ignoring-files/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+ios/Config.xcconfig
+ios/TCIDPodcast/Resources/Secrets.plist
+*.xcconfig.local
+
+# macOS
+.DS_Store
+
+# Xcode
+ios/**/DerivedData/
+ios/**/build/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Node
+node_modules/
+admin/.next/
+admin/out/
+.npm
+
+# Supabase
+supabase/.env
+supabase/.branches
+supabase/.temp
+
+# IDE
+.idea/
+.vscode/
+
+# Test artifacts
+coverage/
+*.log
