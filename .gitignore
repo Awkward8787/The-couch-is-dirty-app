@@ -14,6 +14,7 @@ ios/TCIDPodcast/Resources/Secrets.plist
 # Xcode
 ios/**/DerivedData/
 ios/**/build/
+**/xcuserdata/
 *.xcuserstate
 *.xccheckout
 *.moved-aside
