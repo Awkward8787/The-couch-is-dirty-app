@@ -26,7 +26,8 @@ enum AppConfig {
         secrets["SUPABASE_ANON_KEY"] as? String ?? ""
     }
 
-    static let supportEmail = "support@tcidpodcast.com"
+    static let supportEmail = "info@tcidpodcast.com"
+    static let guestEmail = "info@tcidpodcast.com"
     static let websiteURL = URL(string: "https://tcidpodcast.com")!
     static let privacyURL = URL(string: "https://tcidpodcast.com/privacy")!
     static let termsURL = URL(string: "https://tcidpodcast.com/terms")!
