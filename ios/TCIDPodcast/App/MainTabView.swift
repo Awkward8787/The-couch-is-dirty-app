@@ -3,6 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @Environment(AppState.self) private var appState
     @State private var playback = PlaybackState()
+    @State private var catalog = EpisodeCatalog()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -31,11 +32,13 @@ struct MainTabView: View {
             MiniPlayerBar()
         }
         .environment(playback)
+        .environment(catalog)
         .onAppear {
-            if playback.currentEpisode == nil {
-                playback.currentEpisode = MockDataService.featuredEpisode
-            }
+            playback.configureAudioSession()
             configureTabBarAppearance()
+        }
+        .task {
+            await catalog.loadFromRSS()
         }
     }
 

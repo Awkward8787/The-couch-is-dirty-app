@@ -3,20 +3,69 @@ import SwiftUI
 @Observable
 @MainActor
 final class PlaybackState {
+    private let player = AudioPlayerService()
+
     var currentEpisode: Episode?
     var isPlaying = false
-    var progress: Double = 0.4
-    var elapsedSeconds: Int = 1723
+    var progress: Double = 0
+    var elapsedSeconds: Int = 0
+
+    init() {
+        player.onTimeUpdate = { [weak self] elapsed, duration in
+            guard let self else { return }
+            self.elapsedSeconds = Int(elapsed)
+            if duration > 0 {
+                self.progress = min(max(elapsed / duration, 0), 1)
+            }
+        }
+
+        player.onPlaybackStateChange = { [weak self] isPlaying in
+            self?.isPlaying = isPlaying
+        }
+
+        player.onPlaybackFinished = { [weak self] in
+            self?.isPlaying = false
+            self?.progress = 1
+        }
+    }
+
+    func configureAudioSession() {
+        player.configureSession()
+    }
 
     func togglePlayback(for episode: Episode) {
+        guard episode.audioURL != nil else { return }
+
         if currentEpisode?.id == episode.id {
-            isPlaying.toggle()
-        } else {
-            currentEpisode = episode
-            isPlaying = true
-            progress = 0
-            elapsedSeconds = 0
+            if isPlaying {
+                player.pause()
+            } else {
+                player.resume()
+            }
+            return
         }
+
+        currentEpisode = episode
+        progress = 0
+        elapsedSeconds = 0
+        player.play(episode: episode)
+    }
+
+    func toggleCurrentPlayback() {
+        guard currentEpisode != nil else { return }
+        if isPlaying {
+            player.pause()
+        } else {
+            player.resume()
+        }
+    }
+
+    func skipBackward() {
+        player.seek(by: -30)
+    }
+
+    func skipForward() {
+        player.seek(by: 30)
     }
 }
 
@@ -30,7 +79,7 @@ struct MiniPlayerBar: View {
                     .frame(height: 2)
 
                 HStack(spacing: TCIDSpacing.md) {
-                    EpisodeArtworkView(size: 40)
+                    EpisodeArtworkView(coverArtURL: episode.coverArtURL, size: 40)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(episode.title)
@@ -45,17 +94,21 @@ struct MiniPlayerBar: View {
 
                     Spacer()
 
-                    Button { } label: {
+                    Button {
+                        playback.skipBackward()
+                    } label: {
                         Image(systemName: "gobackward.30")
                             .foregroundStyle(TCIDColors.textPrimary)
                     }
                     .accessibilityLabel("Rewind 30 seconds")
 
                     TCIDPlayButton(size: 40, isPlaying: playback.isPlaying) {
-                        playback.isPlaying.toggle()
+                        playback.toggleCurrentPlayback()
                     }
 
-                    Button { } label: {
+                    Button {
+                        playback.skipForward()
+                    } label: {
                         Image(systemName: "goforward.30")
                             .foregroundStyle(TCIDColors.textPrimary)
                     }

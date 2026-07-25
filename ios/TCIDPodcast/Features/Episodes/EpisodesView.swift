@@ -2,8 +2,8 @@ import SwiftUI
 
 struct EpisodesView: View {
     @Environment(PlaybackState.self) private var playback
+    @Environment(EpisodeCatalog.self) private var catalog
     @State private var selectedFilter: EpisodeFilter = .all
-    private let episodes = MockDataService.episodes
 
     var body: some View {
         TCIDScreenContainer {
@@ -30,18 +30,35 @@ struct EpisodesView: View {
                         .padding(.horizontal, TCIDSpacing.md)
                     }
 
-                    VStack(spacing: TCIDSpacing.md) {
-                        ForEach(filteredEpisodes) { episode in
-                            EpisodeRowView(
-                                episode: episode,
-                                showsNewBadge: episode.episodeNumber == 87
-                            ) {
-                                playback.togglePlayback(for: episode)
+                    if catalog.isLoading {
+                        ProgressView("Loading episodes from RSS…")
+                            .font(TCIDTypography.caption)
+                            .foregroundStyle(TCIDColors.textSecondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, TCIDSpacing.lg)
+                    } else {
+                        VStack(spacing: TCIDSpacing.md) {
+                            ForEach(filteredEpisodes) { episode in
+                                EpisodeRowView(
+                                    episode: episode,
+                                    showsNewBadge: episode.id == catalog.featuredEpisode?.id,
+                                    isPlaying: playback.currentEpisode?.id == episode.id && playback.isPlaying
+                                ) {
+                                    playback.togglePlayback(for: episode)
+                                }
                             }
                         }
+                        .padding(.horizontal, TCIDSpacing.md)
                     }
-                    .padding(.horizontal, TCIDSpacing.md)
-                    .padding(.bottom, TCIDSpacing.xl)
+
+                    if let loadError = catalog.loadError {
+                        Text(loadError)
+                            .font(TCIDTypography.caption)
+                            .foregroundStyle(TCIDColors.destructive)
+                            .padding(.horizontal, TCIDSpacing.md)
+                    }
+
+                    Spacer(minLength: TCIDSpacing.xl)
                 }
             }
         }
@@ -50,9 +67,9 @@ struct EpisodesView: View {
     private var filteredEpisodes: [Episode] {
         switch selectedFilter {
         case .all, .newest:
-            return episodes
+            return catalog.episodes
         case .popular:
-            return episodes.sorted { $0.playCount > $1.playCount }
+            return catalog.episodes.sorted { $0.playCount > $1.playCount }
         case .saved:
             return []
         }
@@ -62,4 +79,5 @@ struct EpisodesView: View {
 #Preview {
     EpisodesView()
         .environment(PlaybackState())
+        .environment(EpisodeCatalog())
 }

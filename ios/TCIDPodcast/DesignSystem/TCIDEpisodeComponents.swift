@@ -1,15 +1,35 @@
 import SwiftUI
 
 struct EpisodeArtworkView: View {
+    var coverArtURL: URL? = nil
     var size: CGFloat = 56
 
     var body: some View {
+        Group {
+            if let coverArtURL {
+                AsyncImage(url: coverArtURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    default:
+                        placeholder
+                    }
+                }
+            } else {
+                placeholder
+            }
+        }
+        .frame(width: size, height: size)
+        .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.sm))
+        .accessibilityHidden(true)
+    }
+
+    private var placeholder: some View {
         Image("PodcastLogo")
             .resizable()
             .scaledToFill()
-            .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.sm))
-            .accessibilityHidden(true)
     }
 }
 
@@ -17,13 +37,14 @@ struct NowPlayingCard: View {
     let episode: Episode
     var progress: Double = 0.4
     var elapsedSeconds: Int = 1723
+    var isPlaying = false
     var onPlay: () -> Void = {}
 
     var body: some View {
         TCIDCard {
             VStack(alignment: .leading, spacing: TCIDSpacing.md) {
                 HStack(alignment: .top, spacing: TCIDSpacing.md) {
-                    EpisodeArtworkView(size: 72)
+                    EpisodeArtworkView(coverArtURL: episode.coverArtURL, size: 72)
 
                     VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
                         HStack(spacing: TCIDSpacing.xs) {
@@ -58,7 +79,7 @@ struct NowPlayingCard: View {
                         }
                         .accessibilityLabel("More options")
 
-                        TCIDPlayButton(size: 52, action: onPlay)
+                        TCIDPlayButton(size: 52, isPlaying: isPlaying, action: onPlay)
                     }
                 }
 
@@ -84,12 +105,13 @@ struct NowPlayingCard: View {
 struct EpisodeRowView: View {
     let episode: Episode
     var showsNewBadge = false
+    var isPlaying = false
     var onPlay: () -> Void = {}
 
     var body: some View {
         TCIDCard {
             HStack(alignment: .top, spacing: TCIDSpacing.md) {
-                EpisodeArtworkView()
+                EpisodeArtworkView(coverArtURL: episode.coverArtURL)
 
                 VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
                     if showsNewBadge {
@@ -133,7 +155,7 @@ struct EpisodeRowView: View {
                     }
                     .accessibilityLabel("More options")
 
-                    TCIDPlayButton(action: onPlay)
+                    TCIDPlayButton(isPlaying: isPlaying, action: onPlay)
                 }
             }
         }
@@ -143,10 +165,11 @@ struct EpisodeRowView: View {
 struct ContinueListeningRow: View {
     let episode: Episode
     var progress: Double
+    var onPlay: () -> Void = {}
 
     var body: some View {
         HStack(spacing: TCIDSpacing.md) {
-            EpisodeArtworkView(size: 48)
+            EpisodeArtworkView(coverArtURL: episode.coverArtURL, size: 48)
             VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
                 Text(episode.title)
                     .font(TCIDTypography.caption.weight(.semibold))
@@ -154,7 +177,7 @@ struct ContinueListeningRow: View {
                     .lineLimit(1)
                 TCIDProgressBar(progress: progress)
             }
-            TCIDPlayButton(size: 36) {}
+            TCIDPlayButton(size: 36, action: onPlay)
         }
         .padding(TCIDSpacing.md)
         .background(TCIDColors.card)
