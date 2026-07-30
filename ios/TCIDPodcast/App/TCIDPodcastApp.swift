@@ -9,6 +9,7 @@ struct TCIDPodcastApp: App {
             RootView()
                 .environment(appState)
                 .preferredColorScheme(.dark)
+                .background(TCIDColors.background.ignoresSafeArea())
         }
     }
 }
