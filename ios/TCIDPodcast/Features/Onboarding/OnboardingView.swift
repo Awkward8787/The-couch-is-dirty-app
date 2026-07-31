@@ -5,47 +5,25 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            TCIDColors.background.ignoresSafeArea()
+            Color.black.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                Spacer(minLength: TCIDSpacing.xl)
+            VStack(spacing: TCIDSpacing.xl) {
+                Spacer()
 
                 Image("PodcastLogo")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: 260)
+                    .frame(maxWidth: 240)
                     .accessibilityLabel("The Couch Is Dirty Podcast")
-
-                Spacer(minLength: TCIDSpacing.lg)
-
-                VStack(spacing: TCIDSpacing.sm) {
-                    Text("Real talk. No filter.")
-                        .font(TCIDTypography.title)
-                        .foregroundStyle(TCIDColors.textPrimary)
-                        .multilineTextAlignment(.center)
-
-                    Rectangle()
-                        .fill(TCIDColors.accent)
-                        .frame(width: 40, height: 3)
-                        .accessibilityHidden(true)
-                }
 
                 Spacer()
 
-                VStack(spacing: TCIDSpacing.md) {
-                    TCIDPrimaryButton(title: "Enter App") {
-                        appState.completeOnboarding()
-                    }
-
-                    TCIDSecondaryButton("Join Community", systemImage: "person.2.fill") {
-                        appState.completeOnboarding()
-                        appState.selectedTab = .community
-                    }
+                TCIDPrimaryButton(title: "Enter") {
+                    appState.completeOnboarding()
                 }
                 .padding(.horizontal, TCIDSpacing.lg)
                 .padding(.bottom, TCIDSpacing.xl)
             }
-            .padding(.horizontal, TCIDSpacing.md)
         }
     }
 }

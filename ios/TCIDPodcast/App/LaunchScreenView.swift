@@ -2,7 +2,6 @@ import SwiftUI
 
 struct LaunchScreenView: View {
     @State private var jokeIndex = 0
-    @State private var contentOpacity: Double = 0
 
     private let jokes = [
         "Fluffing the cushions…",
@@ -10,12 +9,11 @@ struct LaunchScreenView: View {
         "Digging for the remote under the cushions…",
         "Warming up the dirty couch…",
         "Adjusting the cushions for maximum honesty…",
-        "Asking the couch not to spill tea… yet.",
     ]
 
     var body: some View {
         ZStack {
-            TCIDColors.background.ignoresSafeArea()
+            Color.black.ignoresSafeArea()
 
             VStack(spacing: TCIDSpacing.lg) {
                 Spacer()
@@ -31,7 +29,6 @@ struct LaunchScreenView: View {
                 VStack(spacing: TCIDSpacing.md) {
                     ProgressView()
                         .tint(TCIDColors.accent)
-                        .scaleEffect(1.1)
                         .accessibilityLabel("Loading")
 
                     Text(jokes[jokeIndex])
@@ -39,15 +36,8 @@ struct LaunchScreenView: View {
                         .foregroundStyle(TCIDColors.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, TCIDSpacing.xl)
-                        .animation(.easeInOut(duration: 0.35), value: jokeIndex)
                 }
                 .padding(.bottom, TCIDSpacing.xl)
-            }
-            .opacity(contentOpacity)
-        }
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.35)) {
-                contentOpacity = 1
             }
         }
         .task {
