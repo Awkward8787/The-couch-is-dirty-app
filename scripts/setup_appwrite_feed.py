@@ -50,6 +50,16 @@ STRING_ATTRS = [
     ("link_url", 2000, False),
     ("image_file_id", 64, False),
     ("post_kind", 16, True),
+    ("moderation_status", 32, False),
+]
+
+COMMENTS_ID = os.environ.get("APPWRITE_POST_COMMENTS_COLLECTION_ID", "post_comments")
+
+COMMENT_STRING_ATTRS = [
+    ("post_id", 64, True),
+    ("author_id", 64, True),
+    ("author_name", 120, True),
+    ("body", 2000, True),
 ]
 
 
@@ -261,6 +271,69 @@ def bucket_exists(api_key: str) -> bool:
     return status == 200
 
 
+def ensure_boolean_attribute(api_key: str, key: str, required: bool = False, default: bool = False) -> None:
+    existing = list_attribute_keys(api_key)
+    if key in existing:
+        print(f"ok: attribute `{key}`")
+        return
+
+    body: dict = {
+        "key": key,
+        "required": required,
+        "array": False,
+    }
+    if not required:
+        body["default"] = default
+
+    request(
+        "POST",
+        f"/databases/{DATABASE_ID}/collections/{POSTS_ID}/attributes/boolean",
+        api_key,
+        body,
+    )
+    print(f"created: attribute `{key}` (boolean)")
+    wait_for_attribute(api_key, key)
+
+
+def comments_collection_exists(api_key: str) -> bool:
+    status, _ = request(
+        "GET",
+        f"/databases/{DATABASE_ID}/collections/{COMMENTS_ID}",
+        api_key,
+        ok_statuses={200, 404},
+    )
+    return status == 200
+
+
+def ensure_comments_collection(api_key: str) -> None:
+    if comments_collection_exists(api_key):
+        print(f"ok: collection `{COMMENTS_ID}` already exists")
+    else:
+        request(
+            "POST",
+            f"/databases/{DATABASE_ID}/collections",
+            api_key,
+            {
+                "collectionId": COMMENTS_ID,
+                "name": "Post Comments",
+                "permissions": POSTS_PERMISSIONS,
+                "documentSecurity": True,
+                "enabled": True,
+            },
+        )
+        print(f"created: collection `{COMMENTS_ID}`")
+
+    # Temporarily point attribute helpers at comments collection via path overrides.
+    global POSTS_ID
+    original = POSTS_ID
+    POSTS_ID = COMMENTS_ID
+    try:
+        for key, size, required in COMMENT_STRING_ATTRS:
+            ensure_string_attribute(api_key, key, size, required)
+    finally:
+        POSTS_ID = original
+
+
 def ensure_post_images_bucket(api_key: str) -> None:
     if bucket_exists(api_key):
         print(f"ok: bucket `{BUCKET_ID}` already exists")
@@ -298,7 +371,10 @@ def main() -> int:
         for key, size, required in STRING_ATTRS:
             ensure_string_attribute(api_key, key, size, required)
         ensure_integer_attribute(api_key, "like_count", required=False, default=0)
+        ensure_integer_attribute(api_key, "comment_count", required=False, default=0)
+        ensure_boolean_attribute(api_key, "is_edited", required=False, default=False)
         ensure_created_at_index(api_key)
+        ensure_comments_collection(api_key)
         ensure_post_images_bucket(api_key)
     except RuntimeError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

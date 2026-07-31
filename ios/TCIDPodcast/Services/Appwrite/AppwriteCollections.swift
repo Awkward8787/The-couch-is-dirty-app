@@ -40,5 +40,8 @@ enum AppwriteCollections {
         static let imageFileId = "image_file_id"
         static let postKind = "post_kind"
         static let likeCount = "like_count"
+        static let commentCount = "comment_count"
+        static let isEdited = "is_edited"
+        static let moderationStatus = "moderation_status"
     }
 }

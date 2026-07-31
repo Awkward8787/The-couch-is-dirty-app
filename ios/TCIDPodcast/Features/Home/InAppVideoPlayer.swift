@@ -34,23 +34,31 @@ struct InAppVideoPlayer: View {
 private struct DirectVideoPlayer: View {
     let url: URL
     @State private var player: AVPlayer?
+    @State private var hasStarted = false
 
     var body: some View {
-        Group {
-            if let player {
+        ZStack {
+            if let player, hasStarted {
                 VideoPlayer(player: player)
             } else {
-                ProgressView()
-                    .tint(TCIDColors.accent)
-                    .frame(maxWidth: .infinity, minHeight: 200)
-                    .background(TCIDColors.card)
+                Color.black
+                    .overlay {
+                        Button {
+                            if player == nil {
+                                player = AVPlayer(url: url)
+                            }
+                            hasStarted = true
+                            player?.play()
+                        } label: {
+                            Image(systemName: "play.circle.fill")
+                                .font(.system(size: 56))
+                                .foregroundStyle(.white)
+                        }
+                        .accessibilityLabel("Play video")
+                    }
             }
         }
-        .onAppear {
-            if player == nil {
-                player = AVPlayer(url: url)
-            }
-        }
+        .frame(maxWidth: .infinity, minHeight: 200)
         .onDisappear {
             player?.pause()
         }
@@ -63,7 +71,7 @@ private struct YouTubeEmbedPlayer: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []
+        config.mediaTypesRequiringUserActionForPlayback = .all
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.isOpaque = false
         webView.backgroundColor = .black
@@ -86,7 +94,7 @@ private struct YouTubeEmbedPlayer: UIViewRepresentable {
         <body>
           <iframe
             src="https://www.youtube-nocookie.com/embed/\(videoId)?playsinline=1&rel=0&modestbranding=1"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen>
           </iframe>
         </body>
@@ -102,7 +110,7 @@ private struct WebEmbedPlayer: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
-        config.mediaTypesRequiringUserActionForPlayback = []
+        config.mediaTypesRequiringUserActionForPlayback = .all
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.isOpaque = false
         webView.backgroundColor = .black

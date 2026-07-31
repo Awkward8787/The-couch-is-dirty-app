@@ -6,6 +6,13 @@ enum FeedPostKind: String, Codable, Sendable {
     case image
 }
 
+enum FeedModerationStatus: String, Codable, Sendable {
+    case visible
+    case hidden
+    case removed
+    case reported
+}
+
 struct FeedPost: Identifiable, Hashable, Sendable {
     let id: String
     var authorId: String
@@ -16,13 +23,33 @@ struct FeedPost: Identifiable, Hashable, Sendable {
     var imageFileId: String?
     var imageURL: URL?
     var kind: FeedPostKind
-    var createdAt: Date
+    let createdAt: Date
+    var updatedAt: Date?
     var likeCount: Int
+    var commentCount: Int
+    var isEdited: Bool
+    var moderationStatus: FeedModerationStatus
 
     var hasPlayableVideoLink: Bool {
         guard let linkURL else { return false }
         return VideoLinkParser.classify(linkURL) != .unsupported
     }
+
+    var isVisibleInFeed: Bool {
+        switch moderationStatus {
+        case .visible, .reported: true
+        case .hidden, .removed: false
+        }
+    }
+}
+
+struct FeedComment: Identifiable, Hashable, Sendable {
+    let id: String
+    let postId: String
+    var authorId: String
+    var authorName: String
+    var body: String
+    let createdAt: Date
 }
 
 enum VideoLinkKind: Equatable, Sendable {
@@ -33,6 +60,11 @@ enum VideoLinkKind: Equatable, Sendable {
 
 enum VideoLinkParser {
     static func classify(_ url: URL) -> VideoLinkKind {
+        let scheme = (url.scheme ?? "").lowercased()
+        guard scheme == "http" || scheme == "https" else {
+            return .unsupported
+        }
+
         let host = (url.host ?? "").lowercased()
         let path = url.path
         let absolute = url.absoluteString
@@ -48,9 +80,7 @@ enum VideoLinkParser {
             return .directVideo(url: url)
         }
 
-        // Common CDN video query links without extension.
         if host.contains("vimeo.com"), let id = vimeoID(from: url) {
-            // Play via embed URL in web player path — treat as direct embed helper.
             if let embed = URL(string: "https://player.vimeo.com/video/\(id)") {
                 return .directVideo(url: embed)
             }

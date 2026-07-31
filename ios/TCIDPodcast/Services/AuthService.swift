@@ -31,6 +31,13 @@ enum CommunityRole: String, Codable, Sendable, CaseIterable {
         case .user, .member, .moderator, .admin: true
         }
     }
+
+    var canModerate: Bool {
+        switch self {
+        case .moderator, .admin: true
+        case .guest, .user, .member: false
+        }
+    }
 }
 
 @Observable

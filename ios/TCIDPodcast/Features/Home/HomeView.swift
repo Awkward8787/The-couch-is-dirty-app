@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Home tab = community feed only. Episodes live on the Episodes tab.
+/// Home tab = Be a Guest + composer + social feed only. No episodes.
 struct HomeView: View {
     @Environment(AuthService.self) private var auth
     @Environment(FeedStore.self) private var feed
@@ -12,18 +12,11 @@ struct HomeView: View {
         NavigationStack {
             TCIDScreenContainer {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: TCIDSpacing.md) {
+                    LazyVStack(alignment: .leading, spacing: TCIDSpacing.md) {
                         TCIDAppHeader(showsNotificationBadge: false)
 
-                        VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
-                            Text("Feed")
-                                .font(TCIDTypography.largeTitle)
-                                .foregroundStyle(TCIDColors.textPrimary)
-                            Text("Community posts only — updated as people share. Episodes are on the Episodes tab.")
-                                .font(TCIDTypography.caption)
-                                .foregroundStyle(TCIDColors.textSecondary)
-                        }
-                        .padding(.horizontal, TCIDSpacing.md)
+                        BeAGuestHomeBanner()
+                            .padding(.horizontal, TCIDSpacing.md)
 
                         composerPrompt
                             .padding(.horizontal, TCIDSpacing.md)
@@ -34,7 +27,7 @@ struct HomeView: View {
                     }
                 }
                 .refreshable {
-                    await feed.load()
+                    await feed.load(reset: true)
                 }
             }
             .navigationBarHidden(true)
@@ -45,10 +38,11 @@ struct HomeView: View {
                 LoginView()
             }
             .task {
-                await feed.load()
+                await feed.load(reset: true)
+                feed.startRealtime()
             }
-            .onAppear {
-                Task { await feed.load() }
+            .onDisappear {
+                feed.stopRealtime()
             }
         }
     }
@@ -70,19 +64,21 @@ struct HomeView: View {
                 Text(loadError)
                     .font(TCIDTypography.caption)
                     .foregroundStyle(TCIDColors.destructive)
-                Text("Pull to refresh after Appwrite `posts` is set up.")
-                    .font(TCIDTypography.caption)
-                    .foregroundStyle(TCIDColors.textSecondary)
+                Button("Retry") {
+                    Task { await feed.load(reset: true) }
+                }
+                .font(TCIDTypography.caption.weight(.semibold))
+                .foregroundStyle(TCIDColors.accent)
             }
             .padding(TCIDSpacing.md)
             .background(TCIDColors.card)
             .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
         } else if feed.posts.isEmpty {
             VStack(spacing: TCIDSpacing.sm) {
-                Text("No posts yet today")
+                Text("No posts yet")
                     .font(TCIDTypography.headline)
                     .foregroundStyle(TCIDColors.textPrimary)
-                Text("This feed stays empty until someone posts. Be the first.")
+                Text("The feed stays empty until someone posts. Be the first.")
                     .font(TCIDTypography.caption)
                     .foregroundStyle(TCIDColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -90,10 +86,18 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, TCIDSpacing.xl)
         } else {
-            LazyVStack(spacing: TCIDSpacing.md) {
-                ForEach(feed.posts) { post in
-                    FeedPostCard(post: post)
-                }
+            ForEach(feed.posts) { post in
+                FeedPostCard(post: post)
+                    .onAppear {
+                        Task { await feed.loadMoreIfNeeded(currentItem: post) }
+                    }
+            }
+
+            if feed.isLoadingMore {
+                ProgressView()
+                    .tint(TCIDColors.accent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, TCIDSpacing.sm)
             }
         }
     }
@@ -135,4 +139,5 @@ struct HomeView: View {
     HomeView()
         .environment(AuthService())
         .environment(FeedStore())
+        .environment(PlaybackState())
 }

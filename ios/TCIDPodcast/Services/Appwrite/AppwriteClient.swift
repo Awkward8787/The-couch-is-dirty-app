@@ -18,4 +18,5 @@ enum AppwriteClient {
     static let databases = Databases(shared)
     static let storage = Storage(shared)
     static let teams = Teams(shared)
+    static let realtime = Realtime(shared)
 }
