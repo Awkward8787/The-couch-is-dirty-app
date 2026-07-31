@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @Environment(AppState.self) private var appState
+    @Environment(EpisodeCatalog.self) private var catalog
     @State private var playback = PlaybackState()
 
     var body: some View {
@@ -32,10 +33,13 @@ struct MainTabView: View {
         }
         .environment(playback)
         .onAppear {
-            if playback.currentEpisode == nil {
-                playback.currentEpisode = MockDataService.featuredEpisode
-            }
+            playback.configureAudioSession()
             configureTabBarAppearance()
+        }
+        .task {
+            if catalog.episodes.isEmpty {
+                await catalog.loadFromAppwrite()
+            }
         }
     }
 
@@ -69,4 +73,5 @@ struct MainTabView: View {
 #Preview {
     MainTabView()
         .environment(AppState(hasCompletedOnboarding: true))
+        .environment(EpisodeCatalog())
 }

@@ -27,7 +27,7 @@ struct TCIDAppHeader: View {
 
             Spacer()
 
-            Image("PodcastLogo")
+            Image("PodcastLogoDark")
                 .resizable()
                 .scaledToFit()
                 .frame(height: 36)

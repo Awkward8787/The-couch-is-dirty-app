@@ -2,58 +2,40 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Environment(AppState.self) private var appState
-    @State private var currentPage = 0
-
-    private let tagline = "Real talk. No filter."
 
     var body: some View {
         ZStack {
-            TCIDColors.background.ignoresSafeArea()
+            Color.black.ignoresSafeArea()
 
-            VStack(spacing: TCIDSpacing.lg) {
+            VStack(spacing: 0) {
                 Spacer()
 
-                Image("PodcastLogo")
+                Image("PodcastLogoDark")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: 280)
-                    .shadow(color: TCIDColors.accent.opacity(0.3), radius: 40)
+                    .frame(maxWidth: 260)
+                    .padding(.horizontal, 32)
                     .accessibilityLabel("The Couch Is Dirty Podcast")
-
-                Text(tagline)
-                    .font(TCIDTypography.title)
-                    .foregroundStyle(TCIDColors.textPrimary)
-
-                Rectangle()
-                    .fill(TCIDColors.accent)
-                    .frame(width: 48, height: 3)
-                    .accessibilityHidden(true)
 
                 Spacer()
 
-                VStack(spacing: TCIDSpacing.md) {
-                    TCIDPrimaryButton(title: "Enter App") {
-                        appState.completeOnboarding()
-                    }
-
-                    TCIDSecondaryButton("Join Community", systemImage: "person.2.fill") {
-                        appState.completeOnboarding()
-                        appState.selectedTab = .community
-                    }
+                Button {
+                    appState.completeOnboarding()
+                } label: {
+                    Text("Enter the site")
+                        .font(TCIDTypography.headline)
+                        .foregroundStyle(Color.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: TCIDSpacing.touchTarget)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.md))
                 }
                 .padding(.horizontal, TCIDSpacing.lg)
-
-                HStack(spacing: TCIDSpacing.sm) {
-                    ForEach(0..<3, id: \.self) { index in
-                        Circle()
-                            .fill(index == currentPage ? TCIDColors.accent : TCIDColors.textSecondary.opacity(0.4))
-                            .frame(width: 8, height: 8)
-                            .accessibilityLabel(index == currentPage ? "Page \(index + 1), current" : "Page \(index + 1)")
-                    }
-                }
-                .padding(.bottom, TCIDSpacing.lg)
+                .padding(.bottom, 48)
+                .accessibilityHint("Opens the app")
             }
         }
+        .preferredColorScheme(.dark)
     }
 }
 

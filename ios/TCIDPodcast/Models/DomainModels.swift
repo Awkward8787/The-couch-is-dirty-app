@@ -2,6 +2,8 @@ import Foundation
 
 struct Episode: Identifiable, Codable, Hashable, Sendable {
     let id: UUID
+    /// Appwrite document ID (used for API lookups).
+    var documentId: String? = nil
     var rssGuid: String?
     var source: EpisodeSource
     var status: EpisodeStatus
@@ -21,6 +23,7 @@ struct Episode: Identifiable, Codable, Hashable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case id
+        case documentId = "document_id"
         case rssGuid = "rss_guid"
         case source, status, title, slug, description
         case showNotes = "show_notes"
@@ -63,6 +66,7 @@ struct EpisodeChapter: Identifiable, Codable, Hashable, Sendable {
 
 struct UserProfile: Identifiable, Codable, Sendable {
     let id: UUID
+    var documentId: String? = nil
     var username: String?
     var displayName: String?
     var bio: String?
@@ -71,7 +75,9 @@ struct UserProfile: Identifiable, Codable, Sendable {
     var accountStatus: AccountStatus
 
     enum CodingKeys: String, CodingKey {
-        case id, username, bio, role
+        case id
+        case documentId = "document_id"
+        case username, bio, role
         case displayName = "display_name"
         case avatarURL = "avatar_url"
         case accountStatus = "account_status"

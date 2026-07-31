@@ -32,7 +32,7 @@ enum AppTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: "Home"
+        case .home: "Feed"
         case .episodes: "Episodes"
         case .community: "Community"
         case .profile: "Profile"
@@ -41,7 +41,7 @@ enum AppTab: String, CaseIterable, Identifiable {
 
     var systemImage: String {
         switch self {
-        case .home: "house.fill"
+        case .home: "rectangle.stack.fill"
         case .episodes: "mic.fill"
         case .community: "person.3.fill"
         case .profile: "person.fill"
