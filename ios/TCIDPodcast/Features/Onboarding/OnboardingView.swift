@@ -7,24 +7,34 @@ struct OnboardingView: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            VStack(spacing: TCIDSpacing.xl) {
+            VStack(spacing: 0) {
                 Spacer()
 
                 Image("PodcastLogo")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: 240)
+                    .frame(width: 220, height: 220)
                     .accessibilityLabel("The Couch Is Dirty Podcast")
 
                 Spacer()
 
-                TCIDPrimaryButton(title: "Enter") {
+                Button {
                     appState.completeOnboarding()
+                } label: {
+                    Text("Enter the site")
+                        .font(TCIDTypography.headline)
+                        .foregroundStyle(Color.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: TCIDSpacing.touchTarget)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.md))
                 }
                 .padding(.horizontal, TCIDSpacing.lg)
-                .padding(.bottom, TCIDSpacing.xl)
+                .padding(.bottom, 48)
+                .accessibilityHint("Opens the app")
             }
         }
+        .preferredColorScheme(.dark)
     }
 }
 

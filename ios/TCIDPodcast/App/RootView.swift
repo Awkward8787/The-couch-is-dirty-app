@@ -3,15 +3,16 @@ import SwiftUI
 struct RootView: View {
     @Environment(AppState.self) private var appState
     @Environment(EpisodeCatalog.self) private var catalog
-    @State private var showsLaunchSplash = true
+    @State private var showsLaunchSplash = false
     @State private var minimumSplashElapsed = false
 
     var body: some View {
         ZStack {
-            TCIDColors.background.ignoresSafeArea()
+            Color.black.ignoresSafeArea()
 
             Group {
                 if !appState.hasCompletedOnboarding {
+                    // First launch: only black + logo + Enter — no second splash on top.
                     OnboardingView()
                 } else {
                     MainTabView()
@@ -24,8 +25,12 @@ struct RootView: View {
                     .zIndex(1)
             }
         }
-        .background(TCIDColors.background.ignoresSafeArea())
+        .background(Color.black.ignoresSafeArea())
         .task {
+            // Loading splash only after onboarding, while episodes load.
+            guard appState.hasCompletedOnboarding else { return }
+
+            showsLaunchSplash = true
             async let splashTimer: Void = waitForMinimumSplash()
             async let catalogLoad: Void = loadCatalogIfNeeded()
             _ = await (splashTimer, catalogLoad)
@@ -41,10 +46,21 @@ struct RootView: View {
                 dismissSplashIfReady()
             }
         }
+        .onChange(of: appState.hasCompletedOnboarding) { _, completed in
+            guard completed else { return }
+            Task {
+                showsLaunchSplash = true
+                minimumSplashElapsed = false
+                async let splashTimer: Void = waitForMinimumSplash()
+                async let catalogLoad: Void = loadCatalogIfNeeded()
+                _ = await (splashTimer, catalogLoad)
+                dismissSplashIfReady()
+            }
+        }
     }
 
     private func waitForMinimumSplash() async {
-        try? await Task.sleep(for: .milliseconds(1600))
+        try? await Task.sleep(for: .milliseconds(1200))
         minimumSplashElapsed = true
     }
 
@@ -59,7 +75,7 @@ struct RootView: View {
         guard minimumSplashElapsed else { return }
         guard !catalog.isLoading else { return }
 
-        withAnimation(.easeOut(duration: 0.35)) {
+        withAnimation(.easeOut(duration: 0.3)) {
             showsLaunchSplash = false
         }
     }
@@ -67,6 +83,6 @@ struct RootView: View {
 
 #Preview {
     RootView()
-        .environment(AppState(hasCompletedOnboarding: true))
+        .environment(AppState(hasCompletedOnboarding: false))
         .environment(EpisodeCatalog())
 }

@@ -21,7 +21,7 @@ struct LaunchScreenView: View {
                 Image("PodcastLogo")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: 220)
+                    .frame(width: 200, height: 200)
                     .accessibilityLabel("The Couch Is Dirty Podcast")
 
                 Spacer()
