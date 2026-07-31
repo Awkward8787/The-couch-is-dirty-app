@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HomeView: View {
+    @Environment(AppState.self) private var appState
     @Environment(PlaybackState.self) private var playback
     @Environment(EpisodeCatalog.self) private var catalog
 
@@ -8,131 +9,141 @@ struct HomeView: View {
         NavigationStack {
             TCIDScreenContainer {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: TCIDSpacing.lg) {
-                        TCIDAppHeader()
+                    VStack(alignment: .leading, spacing: TCIDSpacing.xl) {
+                        TCIDAppHeader(showsNotificationBadge: false)
 
-                        VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
-                            Text("Welcome back, Couch Fam.")
-                                .font(TCIDTypography.title)
-                                .foregroundStyle(TCIDColors.textPrimary)
-                            Text("Real talk. No filter. All on the couch.")
-                                .font(TCIDTypography.body)
-                                .foregroundStyle(TCIDColors.textSecondary)
+                        hero
+                            .padding(.horizontal, TCIDSpacing.md)
+
+                        if let featured = catalog.featuredEpisode {
+                            featuredSection(featured)
+                                .padding(.horizontal, TCIDSpacing.md)
+                        } else if catalog.isLoading {
+                            ProgressView()
+                                .tint(TCIDColors.accent)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, TCIDSpacing.lg)
                         }
-                        .padding(.horizontal, TCIDSpacing.md)
+
+                        if let continueEpisode, shouldShowContinue(for: continueEpisode) {
+                            continueSection(continueEpisode)
+                                .padding(.horizontal, TCIDSpacing.md)
+                        }
 
                         BeAGuestPromoCard()
                             .padding(.horizontal, TCIDSpacing.md)
 
-                        if let nowPlayingEpisode {
-                            NowPlayingCard(
-                                episode: nowPlayingEpisode,
-                                progress: nowPlayingProgress,
-                                elapsedSeconds: nowPlayingElapsedSeconds,
-                                isPlaying: isNowPlayingActive
-                            ) {
-                                playback.togglePlayback(for: nowPlayingEpisode)
-                            }
+                        browseEpisodesButton
                             .padding(.horizontal, TCIDSpacing.md)
-                        }
-
-                        if let continueEpisode {
-                            VStack(alignment: .leading, spacing: TCIDSpacing.md) {
-                                TCIDSectionHeader(title: "Continue Listening", actionTitle: nil)
-                                ContinueListeningRow(
-                                    episode: continueEpisode,
-                                    progress: continueProgress
-                                ) {
-                                    playback.togglePlayback(for: continueEpisode)
-                                }
-                            }
-                            .padding(.horizontal, TCIDSpacing.md)
-                        }
-
-                        VStack(alignment: .leading, spacing: TCIDSpacing.md) {
-                            TCIDSectionHeader(title: "Latest Episodes", actionTitle: "See All") {}
-                            ForEach(catalog.episodes) { episode in
-                                EpisodeRowView(
-                                    episode: episode,
-                                    showsNewBadge: episode.id == catalog.featuredEpisode?.id,
-                                    isPlaying: playback.currentEpisode?.id == episode.id && playback.isPlaying
-                                ) {
-                                    playback.togglePlayback(for: episode)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, TCIDSpacing.md)
-
-                        VStack(alignment: .leading, spacing: TCIDSpacing.md) {
-                            TCIDSectionHeader(title: "Trending in Community", actionTitle: "See All") {}
-                            CommunityDiscussionCard(discussion: MockDataService.communityDiscussions[0])
-                        }
-                        .padding(.horizontal, TCIDSpacing.md)
-                        .padding(.bottom, TCIDSpacing.xl)
+                            .padding(.bottom, TCIDSpacing.xl)
                     }
                 }
             }
         }
     }
 
-    private var nowPlayingEpisode: Episode? {
-        playback.currentEpisode ?? catalog.featuredEpisode
+    private var hero: some View {
+        VStack(alignment: .leading, spacing: TCIDSpacing.md) {
+            Text("The Couch Is Dirty")
+                .font(TCIDTypography.largeTitle)
+                .foregroundStyle(TCIDColors.textPrimary)
+                .accessibilityAddTraits(.isHeader)
+
+            Rectangle()
+                .fill(TCIDColors.accent)
+                .frame(width: 40, height: 3)
+                .accessibilityHidden(true)
+
+            Text("Real talk. No filter.")
+                .font(TCIDTypography.body)
+                .foregroundStyle(TCIDColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, TCIDSpacing.sm)
     }
 
-    private var isNowPlayingActive: Bool {
-        guard
-            let nowPlayingEpisode,
-            let currentEpisode = playback.currentEpisode
-        else { return false }
+    private func featuredSection(_ episode: Episode) -> some View {
+        VStack(alignment: .leading, spacing: TCIDSpacing.md) {
+            TCIDSectionHeader(title: "Now on the Couch", actionTitle: nil)
 
-        return currentEpisode.id == nowPlayingEpisode.id && playback.isPlaying
+            NavigationLink {
+                EpisodeDetailView(episode: episode)
+            } label: {
+                NowPlayingCard(
+                    episode: episode,
+                    progress: featuredProgress(for: episode),
+                    elapsedSeconds: featuredElapsed(for: episode),
+                    isPlaying: playback.currentEpisode?.id == episode.id && playback.isPlaying
+                ) {
+                    playback.togglePlayback(for: episode)
+                }
+            }
+            .buttonStyle(.plain)
+        }
     }
 
-    private var nowPlayingProgress: Double {
-        guard
-            let nowPlayingEpisode,
-            let currentEpisode = playback.currentEpisode,
-            currentEpisode.id == nowPlayingEpisode.id
-        else { return 0 }
-
-        return playback.progress
+    private func continueSection(_ episode: Episode) -> some View {
+        VStack(alignment: .leading, spacing: TCIDSpacing.md) {
+            TCIDSectionHeader(title: "Continue", actionTitle: nil)
+            ContinueListeningRow(
+                episode: episode,
+                progress: playback.progress
+            ) {
+                playback.togglePlayback(for: episode)
+            }
+        }
     }
 
-    private var nowPlayingElapsedSeconds: Int {
-        guard
-            let nowPlayingEpisode,
-            let currentEpisode = playback.currentEpisode,
-            currentEpisode.id == nowPlayingEpisode.id
-        else { return 0 }
-
-        return playback.elapsedSeconds
+    private var browseEpisodesButton: some View {
+        Button {
+            appState.selectedTab = .episodes
+        } label: {
+            HStack {
+                Text("Browse all episodes")
+                    .font(TCIDTypography.headline)
+                    .foregroundStyle(TCIDColors.textPrimary)
+                Spacer()
+                Image(systemName: "arrow.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(TCIDColors.accent)
+            }
+            .padding(TCIDSpacing.md)
+            .frame(minHeight: TCIDSpacing.touchTarget)
+            .overlay(
+                RoundedRectangle(cornerRadius: TCIDRadius.md)
+                    .stroke(TCIDColors.border, lineWidth: 1)
+            )
+        }
+        .accessibilityHint("Opens the Episodes tab")
     }
 
     private var continueEpisode: Episode? {
-        if
+        guard
             let currentEpisode = playback.currentEpisode,
-            playback.progress > 0,
-            playback.progress < 1
-        {
-            return currentEpisode
-        }
-
-        return catalog.episodes.dropFirst().first
+            playback.progress > 0.02,
+            playback.progress < 0.98
+        else { return nil }
+        return currentEpisode
     }
 
-    private var continueProgress: Double {
-        guard
-            let continueEpisode,
-            let currentEpisode = playback.currentEpisode,
-            continueEpisode.id == currentEpisode.id
-        else { return 0.35 }
+    private func shouldShowContinue(for episode: Episode) -> Bool {
+        episode.id != catalog.featuredEpisode?.id || !playback.isPlaying
+    }
 
+    private func featuredProgress(for episode: Episode) -> Double {
+        guard playback.currentEpisode?.id == episode.id else { return 0 }
         return playback.progress
+    }
+
+    private func featuredElapsed(for episode: Episode) -> Int {
+        guard playback.currentEpisode?.id == episode.id else { return 0 }
+        return playback.elapsedSeconds
     }
 }
 
 #Preview {
     HomeView()
+        .environment(AppState(hasCompletedOnboarding: true))
         .environment(PlaybackState())
         .environment(EpisodeCatalog())
 }

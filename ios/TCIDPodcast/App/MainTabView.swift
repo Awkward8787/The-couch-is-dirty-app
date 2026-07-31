@@ -2,8 +2,8 @@ import SwiftUI
 
 struct MainTabView: View {
     @Environment(AppState.self) private var appState
+    @Environment(EpisodeCatalog.self) private var catalog
     @State private var playback = PlaybackState()
-    @State private var catalog = EpisodeCatalog()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,13 +32,14 @@ struct MainTabView: View {
             MiniPlayerBar()
         }
         .environment(playback)
-        .environment(catalog)
         .onAppear {
             playback.configureAudioSession()
             configureTabBarAppearance()
         }
         .task {
-            await catalog.loadFromAppwrite()
+            if catalog.episodes.isEmpty {
+                await catalog.loadFromAppwrite()
+            }
         }
     }
 
@@ -72,4 +73,5 @@ struct MainTabView: View {
 #Preview {
     MainTabView()
         .environment(AppState(hasCompletedOnboarding: true))
+        .environment(EpisodeCatalog())
 }
