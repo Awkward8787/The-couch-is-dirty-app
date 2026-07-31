@@ -5,9 +5,9 @@ Usage:
   export APPWRITE_API_KEY='your-temporary-api-key'
   python3 scripts/setup_appwrite_feed.py
 
-Scopes needed on the key:
-  databases.read, databases.write
-  buckets.read, buckets.write
+Recommended 1-hour Cursor key scopes:
+  databases.read/write, buckets.read/write, files.read/write,
+  users.read/write, teams.read/write
 
 Never commit the API key. Delete it in Appwrite Console when finished.
 """
@@ -60,7 +60,7 @@ def require_api_key() -> str:
             "Missing APPWRITE_API_KEY.\n\n"
             "1. Appwrite Console → API Keys → Create API Key\n"
             "2. Name: temp-feed-setup  ·  Expire: 1 hour\n"
-            "3. Scopes: databases.read/write, buckets.read/write\n"
+            "3. Scopes: databases, buckets, files, users, teams (read+write)\n"
             "4. Then:\n"
             "     export APPWRITE_API_KEY='...'\n"
             "     python3 scripts/setup_appwrite_feed.py\n",

@@ -6,20 +6,21 @@ The Home tab is **only** the live community feed. It stays empty until Appwrite 
 
 ## Path A — Automate with Cursor (recommended)
 
-### Step 1 — Create a temporary API key
+### Step 1 — Create a 1-hour Cursor API key
 
 1. Appwrite Console → project **tcidpodcast**
 2. **API Keys** → **Create API Key**
-3. Name: `temp-cursor-feed`
+3. Name: `temp-cursor-1h`
 4. Expire: **1 hour**
-5. Scopes:
-   - `databases.read`
-   - `databases.write`
-   - `buckets.read`
-   - `buckets.write`
+5. Enable **all** of these scopes (covers feed + later fixes this hour):
+   - `databases.read` / `databases.write`
+   - `buckets.read` / `buckets.write`
+   - `files.read` / `files.write`
+   - `users.read` / `users.write`
+   - `teams.read` / `teams.write`
 6. Copy the secret
 
-Details: [APPWRITE_API_AUTOMATION.md](./APPWRITE_API_AUTOMATION.md)
+Full checklist: [APPWRITE_API_AUTOMATION.md](./APPWRITE_API_AUTOMATION.md)
 
 ### Step 2 — Hand the key to Cursor
 

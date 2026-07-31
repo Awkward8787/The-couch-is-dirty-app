@@ -1,33 +1,49 @@
 # Automate Appwrite from Cursor
 
-Use a **temporary server API key** so Cursor (or you) can create collections, buckets, and seed data without clicking every Console field.
+Use a **temporary server API key** so Cursor can create collections, buckets, seed data, and fix schema without clicking every Console field.
 
-## Safe handoff (recommended)
+## 1-hour Cursor session key (use this)
 
-Do **not** paste the key into chat if you can avoid it. Prefer an environment variable in the agent terminal / secrets.
+Create **one** key for this hour with the scopes below. That covers feed setup **and** follow-up changes (attributes, buckets, teams/roles, users, reseeding).
 
-### 1. Create a temporary API key
+### Create the key
 
-1. Open Appwrite Console → project **tcidpodcast**
-2. **Overview** / **Settings** → **API Keys** → **Create API Key**
+1. Appwrite Console → project **tcidpodcast**
+2. **API Keys** → **Create API Key**
 3. Fill in:
-   - **Name:** `temp-cursor-feed` (or `temp-rss-seed`)
-   - **Expire:** **1 hour** (shortest you can)
-   - **Scopes** (only what you need right now):
+   - **Name:** `temp-cursor-1h`
+   - **Expire:** **1 hour**
+4. Enable these **scopes** (check every box in this list):
 
-| Task | Scopes |
-|------|--------|
-| Feed setup (`posts` + `post-images`) | `databases.read`, `databases.write`, `buckets.read`, `buckets.write` |
-| RSS episode seed | `databases.read`, `databases.write` |
-| Full Cursor automation (same day) | both sets above |
+| Scope | Why we need it this hour |
+|-------|---------------------------|
+| `databases.read` | Inspect collections / attributes / documents |
+| `databases.write` | Create `posts`, attributes, indexes, seed docs |
+| `buckets.read` | Inspect storage buckets |
+| `buckets.write` | Create / update `post-images` (and other buckets) |
+| `files.read` | Verify uploaded post images / artwork |
+| `files.write` | Seed or fix files if needed |
+| `users.read` | Debug sign-in / author IDs |
+| `users.write` | Fix test users if needed (optional but handy) |
+| `teams.read` | Inspect `members` / `moderators` / `admins` for roles |
+| `teams.write` | Add you to a team so Feed posts get the right badge |
 
-4. Create → **copy the secret once**
+If your Console groups scopes (e.g. “Databases”, “Storage”, “Users”, “Teams”), turn **read + write** on for each of those four groups.
 
-### 2. Give Cursor the key (pick one)
+5. Create → **copy the secret once**
 
-**Option A — env var in this workspace (best)**
+### Do **not** enable (unless we ask later)
 
-In the agent / Cloud Agent terminal:
+- `functions.*` — not used yet  
+- `messaging.*` / push — not in v1  
+- `sites.*` / `vcs.*` — unrelated  
+- Anything labeled “full access” / `*` if a narrower list works — prefer the table above  
+
+---
+
+## Hand the key to Cursor
+
+**Option A — env var (best)**
 
 ```bash
 export APPWRITE_API_KEY='PASTE_KEY_HERE'
@@ -36,46 +52,35 @@ export APPWRITE_PROJECT_ID='tcidpodcast'
 export APPWRITE_DATABASE_ID='episodes'
 ```
 
-Then tell Cursor: *“API key is in APPWRITE_API_KEY — run feed setup.”*
+Then say: *“API key is exported — run feed setup.”*
 
 **Option B — paste once in chat**
 
-Say: *“Use this temporary Appwrite API key for feed setup only, then remind me to delete it:”* and paste the key.
+Say: *“Use this `temp-cursor-1h` key for this hour, then remind me to delete it:”* and paste the secret.
 
-Cursor will run scripts with `APPWRITE_API_KEY`. After success, **delete the key** in Console.
+---
 
-### 3. What Cursor can run for you
+## What Cursor can run
 
 ```bash
 # Create posts collection + attributes + post-images bucket
 python3 scripts/setup_appwrite_feed.py
 
-# Import RSS episodes (optional / already done once)
+# Re-import RSS episodes if needed
 python3 scripts/seed_appwrite_episodes.py
 ```
 
-### 4. Delete the key
+After the hour (or when we’re done): Console → API Keys → delete **`temp-cursor-1h`**.
 
-Appwrite Console → API Keys → delete **`temp-cursor-feed`**.
-
-Never put this key in the iOS app, `Info.plist`, git, or long-lived Cursor memories.
+Never put this key in the iOS app, `Info.plist`, or git.
 
 ## How automation works
 
 | Piece | Value |
 |-------|--------|
 | Endpoint | `https://api.tcidpodcast.com/v1` |
-| Auth header | `X-Appwrite-Key: <api key>` |
-| Project header | `X-Appwrite-Project: tcidpodcast` |
+| Auth | `X-Appwrite-Key: <api key>` |
+| Project | `X-Appwrite-Project: tcidpodcast` |
 | Scripts | `scripts/setup_appwrite_feed.py`, `scripts/seed_appwrite_episodes.py` |
 
-The iOS app only uses the **public** endpoint + project ID (no API key). User sessions use email/password.
-
-## Optional: keep a Cursor secret for the project
-
-If your Cursor Cloud environment supports secrets, store:
-
-- `APPWRITE_API_KEY` — temporary only; rotate often
-- or better: create a dedicated short-lived key per task
-
-Long-term automation without pasting keys each time = short-lived keys + env secrets, not committing keys to the repo.
+The iOS app only uses the public endpoint + project ID (no API key).
