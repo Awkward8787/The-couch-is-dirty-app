@@ -1,92 +1,72 @@
 # Project Status
 
-**Last updated:** 2026-07-25  
-**Current phase:** 2 complete → ready for Phase 3 (Authentication)
+**Last updated:** 2026-07-31  
+**Current phase:** Appwrite integration + auth/RBAC in progress
 
-## Completed (Phase 1)
+## Completed
 
-- [x] Monorepo structure (`ios/`, `admin/`, `supabase/`, `docs/`)
-- [x] PostgreSQL schema — 16+ tables with indexes and constraints
-- [x] Row Level Security policies on all tables
-- [x] Storage buckets and policies (audio, covers, avatars)
-- [x] Account deletion function (GDPR-style)
-- [x] RSS sync Edge Function (parse, dedupe by GUID, preserve manual edits)
-- [x] iOS project relocated to `ios/TCIDPodcast.xcodeproj`
-- [x] Bundle ID set to `com.tcidpodcast.app`, deployment target iOS 18
-- [x] iOS MVVM folder structure, design tokens, onboarding shell
-- [x] Domain models aligned with Supabase schema
-- [x] `PrivacyInfo.xcprivacy` stub
-- [x] Admin Next.js scaffold with Supabase client helper
-- [x] `.env.example` files for all packages
-- [x] Design reference mockups copied to `docs/design-reference/`
+- [x] Monorepo structure (`ios/`, `admin/`, `docs/`)
+- [x] Appwrite backend (self-hosted `api.tcidpodcast.com`, project `tcidpodcast`)
+- [x] iOS Appwrite SDK — episodes, feed, auth, Teams RBAC
+- [x] iOS project: `Tcidapp.xcworkspace` / `TCIDPodcast`
+- [x] Bundle ID `com.tcidpodcast.app`, deployment target iOS 18
+- [x] SwiftUI design system, four-tab shell
+- [x] Home live feed (posts + realtime), Episodes, Community, Profile
+- [x] Audio playback + mini player
+- [x] Admin Next.js scaffold (Appwrite env template)
+- [x] `.env.example` / `Secrets.plist.example` templates
 - [x] README and architecture documentation
 
-## Remaining Work
+## In progress
 
-### Phase 2 — Design System ✅
-- [x] Branded components (header, cards, chips, progress, play button)
-- [x] Now Playing card, episode rows, mini player
-- [x] Community discussion and comment cards
-- [x] Home, Episodes, Community, Profile tab screens
-- [x] Mock data service with seeded preview content
-- [x] Supabase credentials configured (gitignored Secrets.plist, .env.local)
-- [x] iOS build verified
+### Auth & RBAC (Appwrite)
+- [x] Email/password sign-in via Appwrite Account
+- [x] Session restore on launch
+- [x] Teams-based roles (`guest`, `user`, `member`, `moderator`, `admin`)
+- [ ] Sole administrator enforcement (Silk Bone Jones) in Appwrite Teams
+- [ ] Guest browse mode synced to Appwrite profile
+- [ ] Collection permissions aligned with role rules
 
-### Phase 3 — Auth
-- Sign in with Apple
-- Email OTP via Supabase Auth
-- Guest listening (no account required)
-- Keychain session storage
+### Episodes & feed
+- [x] Episode list from Appwrite (+ mock fallback)
+- [x] Home feed from Appwrite `posts`
+- [ ] RSS sync automation (script / admin UI)
 
-### Phase 4 — Episodes & RSS
-- Supabase episode service
-- Episode list with filters, search, pull-to-refresh
-- RSS manual refresh trigger
+## Remaining work
 
-### Phase 5 — Audio Player
-- AVFoundation + MediaPlayer
-- Background audio, Lock Screen, Control Center
-- Progress persistence
+### Phase 7 — Admin dashboard (Appwrite)
+- Appwrite server auth for admin
+- Upload, moderation queue, RSS sync UI
 
-### Phase 6 — Community
-- Posts, comments, reactions
-- Moderation, reporting, blocking
-- Profanity filter, rate limits
-
-### Phase 7 — Admin Dashboard
-- Full dashboard per mockup
-- Upload, RSS sync UI, moderation queue
-
-### Phase 8 — Privacy & Accessibility
-- Legal pages live at tcidpodcast.com
+### Phase 8 — Privacy & accessibility
+- Legal pages at tcidpodcast.com
 - VoiceOver, Dynamic Type, Reduce Motion
 
 ### Phase 9 — Tests
-- Unit, UI, RLS integration tests
+- Unit, UI, Appwrite permission integration tests
 
 ### Phase 10 — App Store
-- TestFlight build, submission checklist
+- TestFlight, submission checklist
 
 ## Blockers
 
 | Blocker | Resolution |
 |---------|------------|
-| Supabase migrations not applied | Run SQL in Dashboard → SQL Editor (see docs/SETUP.md) |
-| Official podcast RSS URL | ✅ `media.rss.com/the-couch-is-dirty-podcast/feed.xml` (8 episodes) |
-| Sign in with Apple capability | Enable in Apple Developer portal for `com.tcidpodcast.app` |
-| App icon 1024×1024 | Export from logo asset for App Store |
+| Appwrite collection permissions | Configure in Console (see `docs/ios/FEED_SETUP.md`) |
+| Official RSS URL | ✅ `media.rss.com/the-couch-is-dirty-podcast/feed.xml` |
+| Sign in with Apple | Enable capability + Appwrite OAuth (planned) |
+| Admin dashboard auth | Wire Appwrite in `admin/` (Phase 7) |
 
-## Next Command
+## Next command
 
 ```bash
-# Apply Supabase migrations (Dashboard → SQL Editor, paste each migration file)
-# Then Phase 3:
-open ios/TCIDPodcast.xcodeproj
+open Tcidapp.xcworkspace
 ```
 
-## Verification Checklist (Phase 1)
+## Verification checklist
 
-- [ ] `supabase db reset` applies all migrations without error (requires Supabase CLI + project)
-- [x] iOS project builds in Xcode without warnings (`BUILD SUCCEEDED`)
+- [x] iOS simulator build succeeds
+- [x] iOS device build succeeds (`CFBundleIdentifier` valid)
+- [x] Single backend only (Appwrite) — legacy SQL backend removed from repo
+- [ ] Appwrite `admins` team contains only Silk Bone Jones
 - [x] `admin/npm run build` succeeds after `npm install`
-- [x] No secrets committed to git

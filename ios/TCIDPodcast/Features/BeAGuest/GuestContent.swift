@@ -27,6 +27,16 @@ enum MailHelper {
         return components.url
     }
 
+    static func supportURL() -> URL? {
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = AppConfig.supportEmail
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "App Support — The Couch Is Dirty Podcast"),
+        ]
+        return components.url
+    }
+
     private static func guestApplicationBody(format: GuestAppearanceType?) -> String {
         let formatLine = format.map { "Preferred appearance: \($0.rawValue)\n" } ?? ""
         return """

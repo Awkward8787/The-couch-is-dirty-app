@@ -4,6 +4,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AuthService.self) private var auth
     @Environment(FeedStore.self) private var feed
+    @Environment(BlockedUsersStore.self) private var blockedUsers
 
     @State private var showsComposer = false
     @State private var showsLogin = false
@@ -12,8 +13,18 @@ struct HomeView: View {
         NavigationStack {
             TCIDScreenContainer {
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: TCIDSpacing.md) {
-                        TCIDAppHeader(showsNotificationBadge: false)
+                    LazyVStack(alignment: .leading, spacing: TCIDSpacing.lg) {
+                        TCIDAppHeader()
+
+                        VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
+                            Text("Feed")
+                                .font(TCIDTypography.display)
+                                .foregroundStyle(TCIDColors.textPrimary)
+                            Text("Community conversations from the couch.")
+                                .font(TCIDTypography.caption)
+                                .foregroundStyle(TCIDColors.textTertiary)
+                        }
+                        .padding(.horizontal, TCIDSpacing.md)
 
                         BeAGuestHomeBanner()
                             .padding(.horizontal, TCIDSpacing.md)
@@ -71,8 +82,12 @@ struct HomeView: View {
                 .foregroundStyle(TCIDColors.accent)
             }
             .padding(TCIDSpacing.md)
-            .background(TCIDColors.card)
+            .background(TCIDColors.surface)
             .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: TCIDRadius.lg)
+                    .stroke(TCIDColors.border, lineWidth: 1)
+            )
         } else if feed.posts.isEmpty {
             VStack(spacing: TCIDSpacing.sm) {
                 Text("No posts yet")
@@ -86,7 +101,7 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, TCIDSpacing.xl)
         } else {
-            ForEach(feed.posts) { post in
+            ForEach(visiblePosts) { post in
                 FeedPostCard(post: post)
                     .onAppear {
                         Task { await feed.loadMoreIfNeeded(currentItem: post) }
@@ -111,27 +126,33 @@ struct HomeView: View {
             }
         } label: {
             HStack(spacing: TCIDSpacing.md) {
-                Circle()
-                    .fill(TCIDColors.cardElevated)
-                    .frame(width: 40, height: 40)
-                    .overlay {
-                        Image(systemName: "person.fill")
-                            .foregroundStyle(TCIDColors.textSecondary)
-                    }
+                TCIDAvatarView(
+                    imageURL: auth.isAuthenticated ? auth.avatarURL : nil,
+                    name: auth.isAuthenticated ? auth.displayName : "?",
+                    size: 36
+                )
 
-                Text(auth.communityRole.canPost ? "What’s on your mind?" : "Sign in to post")
-                    .font(TCIDTypography.caption)
-                    .foregroundStyle(TCIDColors.textSecondary)
+                Text(auth.communityRole.canPost ? "What's on your mind?" : "Sign in to post")
+                    .font(TCIDTypography.body)
+                    .foregroundStyle(TCIDColors.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 Image(systemName: "square.and.pencil")
-                    .foregroundStyle(TCIDColors.textPrimary)
+                    .foregroundStyle(TCIDColors.accent)
             }
             .padding(TCIDSpacing.md)
-            .background(TCIDColors.card)
+            .background(TCIDColors.surface)
             .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: TCIDRadius.lg)
+                    .stroke(TCIDColors.border, lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
+    }
+
+    private var visiblePosts: [FeedPost] {
+        feed.visiblePosts(blockedAuthorIds: blockedUsers.blockedAuthorIds)
     }
 }
 

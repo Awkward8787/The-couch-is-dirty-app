@@ -4,6 +4,7 @@ import SwiftUI
 @MainActor
 final class PlaybackState {
     private let player = AudioPlayerService()
+    private weak var libraryStore: UserLibraryStore?
 
     var currentEpisode: Episode?
     var isPlaying = false
@@ -16,6 +17,12 @@ final class PlaybackState {
             self.elapsedSeconds = Int(elapsed)
             if duration > 0 {
                 self.progress = min(max(elapsed / duration, 0), 1)
+            }
+            if let episode = self.currentEpisode {
+                self.libraryStore?.recordProgress(
+                    episodeId: episode.id,
+                    positionSeconds: Int(elapsed)
+                )
             }
         }
 
@@ -31,6 +38,10 @@ final class PlaybackState {
 
     func configureAudioSession() {
         player.configureSession()
+    }
+
+    func bindLibraryStore(_ store: UserLibraryStore) {
+        libraryStore = store
     }
 
     func togglePlayback(for episode: Episode) {
@@ -75,11 +86,15 @@ struct MiniPlayerBar: View {
     var body: some View {
         if let episode = playback.currentEpisode {
             VStack(spacing: 0) {
+                Rectangle()
+                    .fill(TCIDColors.separator)
+                    .frame(height: 1)
+
                 TCIDProgressBar(progress: playback.progress)
                     .frame(height: 2)
 
                 HStack(spacing: TCIDSpacing.md) {
-                    EpisodeArtworkView(coverArtURL: episode.coverArtURL, size: 40)
+                    EpisodeArtworkView(coverArtURL: episode.coverArtURL, size: 44)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(episode.title)
@@ -87,8 +102,8 @@ struct MiniPlayerBar: View {
                             .foregroundStyle(TCIDColors.textPrimary)
                             .lineLimit(1)
                         Text(AppConfig.showName)
-                            .font(.caption2)
-                            .foregroundStyle(TCIDColors.textSecondary)
+                            .font(TCIDTypography.micro)
+                            .foregroundStyle(TCIDColors.textTertiary)
                             .lineLimit(1)
                     }
 
@@ -98,7 +113,8 @@ struct MiniPlayerBar: View {
                         playback.skipBackward()
                     } label: {
                         Image(systemName: "gobackward.30")
-                            .foregroundStyle(TCIDColors.textPrimary)
+                            .font(.body.weight(.medium))
+                            .foregroundStyle(TCIDColors.textSecondary)
                     }
                     .accessibilityLabel("Rewind 30 seconds")
 
@@ -110,13 +126,14 @@ struct MiniPlayerBar: View {
                         playback.skipForward()
                     } label: {
                         Image(systemName: "goforward.30")
-                            .foregroundStyle(TCIDColors.textPrimary)
+                            .font(.body.weight(.medium))
+                            .foregroundStyle(TCIDColors.textSecondary)
                     }
                     .accessibilityLabel("Forward 30 seconds")
                 }
                 .padding(.horizontal, TCIDSpacing.md)
                 .padding(.vertical, TCIDSpacing.sm)
-                .background(TCIDColors.card)
+                .background(TCIDColors.surfaceElevated)
             }
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Mini player, \(episode.title)")

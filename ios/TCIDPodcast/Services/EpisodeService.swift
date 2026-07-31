@@ -28,35 +28,3 @@ enum EpisodeService {
         return AppwriteDocumentMapping.episode(from: document)
     }
 }
-
-enum ProfileService {
-    static func fetchProfile(userId: String) async throws -> UserProfile? {
-        do {
-            let document = try await AppwriteClient.databases.getDocument(
-                databaseId: AppConfig.appwriteDatabaseId,
-                collectionId: AppwriteCollections.Collection.profiles,
-                documentId: userId
-            )
-            return AppwriteDocumentMapping.profile(from: document, userId: userId)
-        } catch {
-            let message = error.localizedDescription.lowercased()
-            if message.contains("not found") {
-                return fallbackProfile(userId: userId)
-            }
-            throw error
-        }
-    }
-
-    private static func fallbackProfile(userId: String) -> UserProfile {
-        UserProfile(
-            id: AppwriteDocumentMapping.documentUUID(userId),
-            documentId: userId,
-            username: nil,
-            displayName: nil,
-            bio: nil,
-            avatarURL: nil,
-            role: .user,
-            accountStatus: .active
-        )
-    }
-}

@@ -21,7 +21,7 @@ struct EditPostView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                TCIDColors.background.ignoresSafeArea()
                 VStack(alignment: .leading, spacing: TCIDSpacing.md) {
                     TextField("What’s on your mind?", text: $bodyText, axis: .vertical)
                         .lineLimit(4...10)
@@ -43,18 +43,11 @@ struct EditPostView: View {
                             .foregroundStyle(TCIDColors.destructive)
                     }
 
-                    Button {
+                    TCIDPrimaryButton(title: isSaving ? "Saving…" : "Save") {
                         Task { await save() }
-                    } label: {
-                        Text(isSaving ? "Saving…" : "Save")
-                            .font(TCIDTypography.headline)
-                            .foregroundStyle(Color.black)
-                            .frame(maxWidth: .infinity)
-                            .frame(minHeight: TCIDSpacing.touchTarget)
-                            .background(Color.white)
-                            .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.md))
                     }
                     .disabled(isSaving)
+                    .opacity(isSaving ? 0.5 : 1)
 
                     Spacer()
                 }

@@ -128,20 +128,8 @@ struct BeAGuestView: View {
 
     private var actionButtons: some View {
         VStack(spacing: TCIDSpacing.md) {
-            Button {
+            TCIDPrimaryButton(title: "Apply to Be a Guest", systemImage: "mic.fill") {
                 openGuestEmail(format: nil)
-            } label: {
-                HStack(spacing: TCIDSpacing.sm) {
-                    Image(systemName: "mic.fill")
-                        .foregroundStyle(TCIDColors.accent)
-                    Text("Apply to Be a Guest")
-                        .font(TCIDTypography.headline)
-                        .foregroundStyle(TCIDColors.accent)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: TCIDSpacing.touchTarget)
-                .background(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.md))
             }
             .accessibilityHint("Opens email to apply as a guest")
 

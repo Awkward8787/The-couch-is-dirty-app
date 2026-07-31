@@ -1,6 +1,7 @@
 import Appwrite
 import Foundation
 import Observation
+import UIKit
 
 struct AuthUser: Sendable, Equatable {
     let id: String
@@ -44,6 +45,7 @@ enum CommunityRole: String, Codable, Sendable, CaseIterable {
 @MainActor
 final class AuthService {
     private(set) var currentUser: AuthUser?
+    private(set) var userProfile: UserProfile?
     private(set) var communityRole: CommunityRole = .guest
     private(set) var teamIds: Set<String> = []
     private(set) var isRestoringSession = true
@@ -51,6 +53,8 @@ final class AuthService {
     private(set) var lastError: String?
 
     var isAuthenticated: Bool { currentUser != nil }
+
+    var avatarURL: URL? { userProfile?.avatarURL }
 
     var displayName: String {
         if let name = currentUser?.name, !name.isEmpty { return name }
@@ -69,8 +73,10 @@ final class AuthService {
             let user = try await AppwriteClient.account.get()
             currentUser = AuthUser(id: user.id, email: user.email, name: user.name)
             await refreshRole()
+            await refreshProfile()
         } catch {
             currentUser = nil
+            userProfile = nil
             communityRole = .guest
             teamIds = []
         }
@@ -95,10 +101,42 @@ final class AuthService {
             let user = try await AppwriteClient.account.get()
             currentUser = AuthUser(id: user.id, email: user.email, name: user.name)
             await refreshRole()
+            await refreshProfile()
         } catch {
             lastError = error.localizedDescription
             throw error
         }
+    }
+
+    func uploadAvatar(image: UIImage) async throws {
+        guard let user = currentUser else {
+            throw ProfileServiceError.signInRequired
+        }
+
+        isSubmitting = true
+        lastError = nil
+        defer { isSubmitting = false }
+
+        do {
+            userProfile = try await ProfileService.uploadAvatar(
+                userId: user.id,
+                image: image,
+                previousFileId: userProfile?.avatarFileId,
+                displayName: displayName
+            )
+        } catch {
+            lastError = error.localizedDescription
+            throw error
+        }
+    }
+
+    func refreshProfile() async {
+        guard let userId = currentUser?.id else {
+            userProfile = nil
+            return
+        }
+
+        userProfile = try? await ProfileService.fetchProfile(userId: userId)
     }
 
     func signOut() async {
@@ -106,21 +144,74 @@ final class AuthService {
         defer { isSubmitting = false }
         _ = try? await AppwriteClient.account.deleteSession(sessionId: "current")
         currentUser = nil
+        userProfile = nil
         communityRole = .guest
         teamIds = []
     }
 
-    private func refreshRole() async {
+    /// Permanently deletes the signed-in Appwrite account and local profile data (Guideline 5.1.1(v)).
+    func deleteAccount() async throws {
         guard currentUser != nil else {
+            lastError = "Sign in to delete your account."
+            throw FeedServiceError.signInRequired
+        }
+
+        isSubmitting = true
+        lastError = nil
+        defer { isSubmitting = false }
+
+        do {
+            try await AccountDeletionService.deleteCurrentAccount()
+            currentUser = nil
+            userProfile = nil
+            communityRole = .guest
+            teamIds = []
+        } catch let error as AccountDeletionError {
+            lastError = error.localizedDescription
+            throw error
+        } catch {
+            lastError = error.localizedDescription
+            throw error
+        }
+    }
+
+    func sendPasswordRecovery(email: String) async throws {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            lastError = "Enter your email address."
+            throw FeedServiceError.signInRequired
+        }
+
+        isSubmitting = true
+        lastError = nil
+        defer { isSubmitting = false }
+
+        do {
+            let recoveryURL = AppConfig.passwordRecoveryURL.absoluteString
+            _ = try await AppwriteClient.account.createRecovery(
+                email: trimmed,
+                url: recoveryURL
+            )
+        } catch {
+            lastError = error.localizedDescription
+            throw error
+        }
+    }
+
+    private func refreshRole() async {
+        guard let user = currentUser else {
             communityRole = .guest
             teamIds = []
             return
         }
 
+        let isSoleAdministrator = user.email.lowercased()
+            == AppConfig.administratorAccountEmail.lowercased()
+
         do {
             let teams = try await AppwriteClient.teams.list()
             teamIds = Set(teams.teams.map(\.id))
-            if teamIds.contains(AppwriteCollections.Team.admins) {
+            if isSoleAdministrator, teamIds.contains(AppwriteCollections.Team.admins) {
                 communityRole = .admin
             } else if teamIds.contains(AppwriteCollections.Team.moderators) {
                 communityRole = .moderator
@@ -130,7 +221,6 @@ final class AuthService {
                 communityRole = .user
             }
         } catch {
-            // Signed in, but teams unavailable — still a community user.
             communityRole = .user
             teamIds = []
         }

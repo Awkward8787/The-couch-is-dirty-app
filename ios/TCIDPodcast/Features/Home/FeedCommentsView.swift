@@ -12,11 +12,12 @@ struct FeedCommentsView: View {
     @State private var isSending = false
     @State private var error: String?
     @State private var showsLogin = false
+    @State private var actionMessage: String?
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                TCIDColors.background.ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     if isLoading && comments.isEmpty {
@@ -52,6 +53,16 @@ struct FeedCommentsView: View {
                                         .foregroundStyle(TCIDColors.textPrimary)
                                 }
                                 .listRowBackground(TCIDColors.card)
+                                .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                    if comment.authorId != auth.currentUser?.id {
+                                        Button {
+                                            Task { await report(comment) }
+                                        } label: {
+                                            Label("Report", systemImage: "flag")
+                                        }
+                                        .tint(.orange)
+                                    }
+                                }
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                     if comment.authorId == auth.currentUser?.id || auth.communityRole.canModerate {
                                         Button(role: .destructive) {
@@ -67,6 +78,15 @@ struct FeedCommentsView: View {
                     }
 
                     composer
+
+                    if let actionMessage {
+                        Text(actionMessage)
+                            .font(TCIDTypography.caption)
+                            .foregroundStyle(TCIDColors.textSecondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, TCIDSpacing.md)
+                            .padding(.bottom, TCIDSpacing.sm)
+                    }
                 }
             }
             .navigationTitle("Comments")
@@ -107,7 +127,12 @@ struct FeedCommentsView: View {
             .frame(width: TCIDSpacing.touchTarget, height: TCIDSpacing.touchTarget)
         }
         .padding(TCIDSpacing.md)
-        .background(Color.black)
+        .background(TCIDColors.surfaceElevated)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(TCIDColors.separator)
+                .frame(height: 1)
+        }
     }
 
     private func load() async {
@@ -148,6 +173,19 @@ struct FeedCommentsView: View {
             comments.removeAll { $0.id == comment.id }
         } catch {
             self.error = error.localizedDescription
+        }
+    }
+
+    private func report(_ comment: FeedComment) async {
+        guard auth.isAuthenticated else {
+            showsLogin = true
+            return
+        }
+        do {
+            try await FeedService.reportComment(commentId: comment.id)
+            actionMessage = "Report received. Moderators will review."
+        } catch {
+            actionMessage = error.localizedDescription
         }
     }
 }

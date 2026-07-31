@@ -6,37 +6,38 @@ struct BeAGuestHomeBanner: View {
         NavigationLink {
             BeAGuestView()
         } label: {
-            VStack(alignment: .leading, spacing: TCIDSpacing.sm) {
-                Text("Be a Guest")
-                    .font(TCIDTypography.headline)
-                    .foregroundStyle(TCIDColors.textPrimary)
-
-                Text("Got a story for the couch? Apply to appear in person or by phone.")
-                    .font(TCIDTypography.caption)
-                    .foregroundStyle(TCIDColors.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                HStack {
-                    Text("Apply now")
-                        .font(TCIDTypography.caption.weight(.semibold))
-                        .foregroundStyle(Color.black)
-                        .padding(.horizontal, TCIDSpacing.md)
-                        .padding(.vertical, TCIDSpacing.sm)
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.sm))
-
-                    Spacer(minLength: 0)
-
-                    Text(AppConfig.guestEmail)
-                        .font(.caption2)
+            HStack(spacing: TCIDSpacing.md) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: TCIDRadius.sm)
+                        .fill(TCIDColors.accentMuted)
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "mic.fill")
                         .foregroundStyle(TCIDColors.accent)
-                        .lineLimit(1)
                 }
+
+                VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
+                    Text("Be a Guest")
+                        .font(TCIDTypography.headline)
+                        .foregroundStyle(TCIDColors.textPrimary)
+                    Text("Apply to join the couch in person or by phone.")
+                        .font(TCIDTypography.caption)
+                        .foregroundStyle(TCIDColors.textSecondary)
+                        .lineLimit(2)
+                }
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(TCIDColors.textTertiary)
             }
             .padding(TCIDSpacing.md)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(TCIDColors.card)
+            .background(TCIDColors.surfaceElevated)
             .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
+            .overlay(
+                RoundedRectangle(cornerRadius: TCIDRadius.lg)
+                    .stroke(TCIDColors.border, lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens the Be a Guest application")
@@ -47,6 +48,6 @@ struct BeAGuestHomeBanner: View {
     NavigationStack {
         BeAGuestHomeBanner()
             .padding()
-            .background(Color.black)
+            .background(TCIDColors.background)
     }
 }

@@ -29,11 +29,6 @@ admin/.next/
 admin/out/
 .npm
 
-# Supabase
-supabase/.env
-supabase/.branches
-supabase/.temp
-
 # IDE
 .idea/
 .vscode/

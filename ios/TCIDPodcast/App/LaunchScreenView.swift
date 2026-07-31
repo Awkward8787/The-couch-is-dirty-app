@@ -1,56 +1,93 @@
 import SwiftUI
 
 struct LaunchScreenView: View {
-    @State private var jokeIndex = 0
+    var progress: Double
 
-    private let jokes = [
-        "Fluffing the cushions…",
-        "Convincing the couch this is a good idea…",
-        "Digging for the remote under the cushions…",
-        "Warming up the dirty couch…",
-        "Adjusting the cushions for maximum honesty…",
-    ]
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var didAppear = false
+
+    private let barWidth: CGFloat = 120
 
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-
-            VStack(spacing: TCIDSpacing.lg) {
-                Spacer()
-
-                Image("PodcastLogoDark")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 220)
-                    .padding(.horizontal, 32)
-                    .accessibilityLabel("The Couch Is Dirty Podcast")
-
-                Spacer()
+        GeometryReader { proxy in
+            ZStack {
+                TCIDStudioBackground()
 
                 VStack(spacing: TCIDSpacing.md) {
-                    ProgressView()
-                        .tint(TCIDColors.accent)
-                        .accessibilityLabel("Loading")
+                    Spacer()
+                        .frame(height: topInset(for: proxy))
 
-                    Text(jokes[jokeIndex])
-                        .font(TCIDTypography.caption)
-                        .foregroundStyle(TCIDColors.textSecondary)
+                    TCIDWordmark(logoSize: 36, showsTagline: true)
+                        .opacity(didAppear ? 1 : 0)
+                        .scaleEffect(didAppear ? 1 : 0.96)
+
+                    LaunchProgressBar(progress: progress, width: barWidth)
+                        .padding(.top, TCIDSpacing.sm)
+
+                    Text(statusLine)
+                        .font(TCIDTypography.micro)
+                        .foregroundStyle(TCIDColors.textTertiary)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, TCIDSpacing.xl)
+                        .accessibilityLabel(statusLine)
+
+                    Spacer()
                 }
-                .padding(.bottom, TCIDSpacing.xl)
+                .frame(maxWidth: .infinity)
             }
         }
-        .task {
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(2.2))
-                guard !Task.isCancelled else { return }
-                jokeIndex = (jokeIndex + 1) % jokes.count
+        .onAppear {
+            guard !reduceMotion else {
+                didAppear = true
+                return
+            }
+            withAnimation(.easeOut(duration: 0.45)) {
+                didAppear = true
             }
         }
     }
+
+    private var statusLine: String {
+        if progress >= 1 { return "Welcome back" }
+        if progress >= 0.55 { return "Almost ready" }
+        if progress >= 0.2 { return "Loading episodes" }
+        return "Starting up"
+    }
+
+    private func topInset(for proxy: GeometryProxy) -> CGFloat {
+        proxy.safeAreaInsets.top + proxy.size.height * 0.16
+    }
 }
 
-#Preview {
-    LaunchScreenView()
+private struct LaunchProgressBar: View {
+    let progress: Double
+    let width: CGFloat
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            Capsule()
+                .fill(TCIDColors.border)
+
+            Capsule()
+                .fill(TCIDColors.accent)
+                .frame(width: width * clampedProgress)
+        }
+        .frame(width: width, height: 2)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.28), value: clampedProgress)
+        .accessibilityLabel("Loading progress")
+        .accessibilityValue("\(Int(clampedProgress * 100)) percent")
+    }
+
+    private var clampedProgress: Double {
+        min(max(progress, 0), 1)
+    }
+}
+
+#Preview("Mid load") {
+    LaunchScreenView(progress: 0.42)
+}
+
+#Preview("Complete") {
+    LaunchScreenView(progress: 1)
 }

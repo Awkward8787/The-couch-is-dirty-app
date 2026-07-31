@@ -32,6 +32,7 @@ enum FeedService {
         authorId: String,
         authorName: String,
         authorRole: CommunityRole,
+        authorAvatarFileId: String?,
         body: String,
         linkURL: URL?,
         imageJPEGData: Data?
@@ -99,6 +100,9 @@ enum FeedService {
         }
         if let imageFileId {
             data["image_file_id"] = imageFileId
+        }
+        if let authorAvatarFileId, !authorAvatarFileId.isEmpty {
+            data[AppwriteCollections.Posts.authorAvatarUrl] = authorAvatarFileId
         }
 
         do {
@@ -196,6 +200,30 @@ enum FeedService {
             databaseId: AppConfig.appwriteDatabaseId,
             collectionId: AppwriteCollections.Collection.posts,
             documentId: postId
+        )
+    }
+
+    static func reportPost(postId: String) async throws -> FeedPost {
+        let document = try await AppwriteClient.databases.updateDocument(
+            databaseId: AppConfig.appwriteDatabaseId,
+            collectionId: AppwriteCollections.Collection.posts,
+            documentId: postId,
+            data: [
+                AppwriteCollections.Posts.moderationStatus: FeedModerationStatus.reported.rawValue,
+            ]
+        )
+        guard let post = mapPost(from: document) else {
+            throw FeedServiceError.mappingFailed
+        }
+        return post
+    }
+
+    static func reportComment(commentId: String) async throws {
+        _ = try await AppwriteClient.databases.updateDocument(
+            databaseId: AppConfig.appwriteDatabaseId,
+            collectionId: AppwriteCollections.Collection.postComments,
+            documentId: commentId,
+            data: ["is_reported": true]
         )
     }
 
@@ -314,6 +342,10 @@ enum FeedService {
         let statusRaw = AppwriteDocumentMapping.string(from: data, key: "moderation_status")
             ?? FeedModerationStatus.visible.rawValue
         let imageFileId = AppwriteDocumentMapping.string(from: data, key: "image_file_id")
+        let authorAvatarFileId = AppwriteDocumentMapping.string(
+            from: data,
+            key: AppwriteCollections.Posts.authorAvatarUrl
+        )
         let link = AppwriteDocumentMapping.url(from: data, key: "link_url")
         let createdAt = AppwriteDateParser.parse(document.createdAt) ?? Date()
         let updatedAt = AppwriteDateParser.parse(document.updatedAt)
@@ -323,6 +355,12 @@ enum FeedService {
             authorId: authorId,
             authorName: authorName,
             authorRole: CommunityRole(rawValue: roleRaw) ?? .user,
+            authorAvatarURL: authorAvatarFileId.flatMap {
+                AppwriteStorageURL.viewURL(
+                    bucketId: AppwriteCollections.Bucket.avatars,
+                    fileId: $0
+                )
+            },
             body: body,
             linkURL: link,
             imageFileId: imageFileId,

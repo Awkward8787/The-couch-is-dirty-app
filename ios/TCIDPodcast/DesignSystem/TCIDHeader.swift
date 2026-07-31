@@ -1,49 +1,15 @@
 import SwiftUI
 
 struct TCIDAppHeader: View {
-    var showsNotificationBadge = true
+    var showsWordmark: Bool = true
 
     var body: some View {
         HStack {
-            Button {
-                // Phase 3+
-            } label: {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "bell")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(TCIDColors.textPrimary)
-                        .frame(width: TCIDSpacing.touchTarget, height: TCIDSpacing.touchTarget)
-
-                    if showsNotificationBadge {
-                        Circle()
-                            .fill(TCIDColors.accent)
-                            .frame(width: 8, height: 8)
-                            .offset(x: 2, y: 6)
-                            .accessibilityLabel("Unread notifications")
-                    }
-                }
+            if showsWordmark {
+                TCIDWordmark(logoSize: 28, showsTagline: false, alignment: .leading)
             }
-            .accessibilityLabel("Notifications")
 
             Spacer()
-
-            Image("PodcastLogoDark")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 36)
-                .accessibilityLabel("The Couch Is Dirty Podcast")
-
-            Spacer()
-
-            Button {
-                // Phase 4 search
-            } label: {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(TCIDColors.textPrimary)
-                    .frame(width: TCIDSpacing.touchTarget, height: TCIDSpacing.touchTarget)
-            }
-            .accessibilityLabel("Search")
         }
         .padding(.horizontal, TCIDSpacing.md)
         .padding(.vertical, TCIDSpacing.sm)
@@ -95,10 +61,14 @@ struct TCIDFilterChip: View {
                 Text(title)
                     .font(TCIDTypography.caption.weight(.semibold))
             }
-            .foregroundStyle(isSelected ? TCIDColors.textPrimary : TCIDColors.textSecondary)
+            .foregroundStyle(isSelected ? TCIDColors.accent : TCIDColors.textSecondary)
             .padding(.horizontal, TCIDSpacing.md)
             .frame(minHeight: 36)
-            .background(isSelected ? TCIDColors.accent : TCIDColors.card)
+            .background(TCIDColors.surface)
+            .overlay(
+                Capsule()
+                    .stroke(isSelected ? TCIDColors.accent.opacity(0.55) : TCIDColors.border, lineWidth: 1)
+            )
             .clipShape(Capsule())
         }
         .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -112,13 +82,13 @@ struct TCIDProgressBar: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(TCIDColors.cardElevated)
+                    .fill(TCIDColors.surfaceElevated)
                 Capsule()
                     .fill(TCIDColors.accent)
                     .frame(width: max(0, geo.size.width * min(1, max(0, progress))))
             }
         }
-        .frame(height: 4)
+        .frame(height: 3)
         .accessibilityValue("\(Int(progress * 100)) percent played")
     }
 }

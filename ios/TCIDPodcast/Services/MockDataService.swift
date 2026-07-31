@@ -1,6 +1,6 @@
 import Foundation
 
-/// Seeded mock data for UI development — replaced by Supabase in Phase 4.
+/// Seeded mock data for UI development — replaced by Appwrite when offline fallback is not needed.
 enum MockDataService {
     static let featuredEpisode = episodes[0]
 
@@ -103,6 +103,33 @@ enum MockDataService {
         "What episode made you rethink a relationship?",
     ]
 
+    static let homeFeedPosts: [HomeFeedPost] = [
+        HomeFeedPost(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000001")!,
+            authorName: "Marcus R.",
+            body: "Just finished my morning walk listening to the latest — needed that reminder to protect my peace today.",
+            timeAgo: "12m ago",
+            reactionCount: 18,
+            commentCount: 4
+        ),
+        HomeFeedPost(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000002")!,
+            authorName: "Keisha L.",
+            body: "Who else is pulling up to the live recording next month? Couch fam let's go! 🔥",
+            timeAgo: "1h ago",
+            reactionCount: 42,
+            commentCount: 11
+        ),
+        HomeFeedPost(
+            id: UUID(uuidString: "10000000-0000-0000-0000-000000000003")!,
+            authorName: "Devon P.",
+            body: "Real talk: setting boundaries isn't selfish. Wish I'd heard that ten years ago.",
+            timeAgo: "3h ago",
+            reactionCount: 67,
+            commentCount: 9
+        ),
+    ]
+
     private static func date(year: Int, month: Int, day: Int) -> Date {
         Calendar.current.date(from: DateComponents(year: year, month: month, day: day)) ?? .now
     }
@@ -131,6 +158,15 @@ struct FanComment: Identifiable, Hashable {
     let episodeTitle: String
     let timeAgo: String
     let likeCount: Int
+}
+
+struct HomeFeedPost: Identifiable, Hashable {
+    let id: UUID
+    let authorName: String
+    let body: String
+    let timeAgo: String
+    let reactionCount: Int
+    let commentCount: Int
 }
 
 enum EpisodeFilter: String, CaseIterable, Identifiable {

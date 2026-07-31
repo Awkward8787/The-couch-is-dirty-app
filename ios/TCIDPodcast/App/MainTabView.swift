@@ -3,6 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @Environment(AppState.self) private var appState
     @Environment(EpisodeCatalog.self) private var catalog
+    @Environment(UserLibraryStore.self) private var library
     @State private var playback = PlaybackState()
 
     var body: some View {
@@ -34,6 +35,7 @@ struct MainTabView: View {
         .environment(playback)
         .onAppear {
             playback.configureAudioSession()
+            playback.bindLibraryStore(library)
             configureTabBarAppearance()
         }
         .task {
@@ -64,7 +66,13 @@ struct MainTabView: View {
     private func configureTabBarAppearance() {
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor.black
+        appearance.backgroundColor = UIColor(
+            red: 0.039,
+            green: 0.039,
+            blue: 0.043,
+            alpha: 1
+        )
+        appearance.shadowColor = UIColor.white.withAlphaComponent(0.06)
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }

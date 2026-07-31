@@ -3,6 +3,7 @@ import SwiftUI
 struct FeedPostCard: View {
     @Environment(AuthService.self) private var auth
     @Environment(FeedStore.self) private var feed
+    @Environment(BlockedUsersStore.self) private var blockedUsers
     @Environment(PlaybackState.self) private var playback
 
     let post: FeedPost
@@ -45,8 +46,12 @@ struct FeedPostCard: View {
             }
         }
         .padding(TCIDSpacing.md)
-        .background(TCIDColors.card)
+        .background(TCIDColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: TCIDRadius.lg)
+                .stroke(TCIDColors.border, lineWidth: 1)
+        )
         .sheet(isPresented: $showsComments) {
             FeedCommentsView(post: post)
         }
@@ -61,14 +66,11 @@ struct FeedPostCard: View {
 
     private var header: some View {
         HStack(spacing: TCIDSpacing.sm) {
-            Circle()
-                .fill(TCIDColors.cardElevated)
-                .frame(width: 40, height: 40)
-                .overlay {
-                    Text(String(post.authorName.prefix(1)).uppercased())
-                        .font(TCIDTypography.caption.weight(.bold))
-                        .foregroundStyle(TCIDColors.textPrimary)
-                }
+            TCIDAvatarView(
+                imageURL: post.authorAvatarURL,
+                name: post.authorName,
+                size: 40
+            )
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: TCIDSpacing.xs) {
@@ -113,7 +115,13 @@ struct FeedPostCard: View {
 
             Menu {
                 Button("Report") {
-                    actionError = "Thanks — report received. Moderators will review."
+                    Task { await reportPost() }
+                }
+                if auth.isAuthenticated, post.authorId != auth.currentUser?.id {
+                    Button("Block \(post.authorName)") {
+                        blockedUsers.block(authorId: post.authorId)
+                        actionError = "You won't see posts from this person."
+                    }
                 }
                 if canEdit {
                     Button("Edit") { showsEdit = true }
@@ -253,6 +261,20 @@ struct FeedPostCard: View {
         }
         do {
             try await feed.deletePost(post, currentUserId: userId, role: auth.communityRole)
+        } catch {
+            actionError = error.localizedDescription
+        }
+    }
+
+    private func reportPost() async {
+        actionError = nil
+        guard auth.isAuthenticated else {
+            showsLogin = true
+            return
+        }
+        do {
+            try await feed.reportPost(post)
+            actionError = "Thanks — report received. Moderators will review."
         } catch {
             actionError = error.localizedDescription
         }

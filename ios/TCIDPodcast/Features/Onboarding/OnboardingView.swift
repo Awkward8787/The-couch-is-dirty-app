@@ -2,40 +2,57 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    @State private var didAppear = false
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            TCIDStudioBackground()
 
             VStack(spacing: 0) {
                 Spacer()
 
-                Image("PodcastLogoDark")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 260)
-                    .padding(.horizontal, 32)
-                    .accessibilityLabel("The Couch Is Dirty Podcast")
+                VStack(spacing: TCIDSpacing.lg) {
+                    TCIDWordmark(logoSize: 52, showsTagline: true)
+                        .opacity(didAppear ? 1 : 0)
+                        .offset(y: didAppear ? 0 : 8)
+
+                    Text("Real talk. Unfiltered conversations from the couch.")
+                        .font(TCIDTypography.body)
+                        .foregroundStyle(TCIDColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, TCIDSpacing.xl)
+                        .opacity(didAppear ? 1 : 0)
+                }
 
                 Spacer()
 
-                Button {
-                    appState.completeOnboarding()
-                } label: {
-                    Text("Enter the site")
-                        .font(TCIDTypography.headline)
-                        .foregroundStyle(Color.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: TCIDSpacing.touchTarget)
-                        .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.md))
+                VStack(spacing: TCIDSpacing.sm) {
+                    TCIDPrimaryButton(title: "Get Started") {
+                        appState.completeOnboarding()
+                    }
+
+                    Text("Listen free · Sign in to join the feed")
+                        .font(TCIDTypography.caption)
+                        .foregroundStyle(TCIDColors.textTertiary)
+                        .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, TCIDSpacing.lg)
                 .padding(.bottom, 48)
-                .accessibilityHint("Opens the app")
+                .opacity(didAppear ? 1 : 0)
             }
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            guard !reduceMotion else {
+                didAppear = true
+                return
+            }
+            withAnimation(.easeOut(duration: 0.5).delay(0.08)) {
+                didAppear = true
+            }
+        }
     }
 }
 

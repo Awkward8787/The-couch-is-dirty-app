@@ -3,6 +3,7 @@ import SwiftUI
 struct EpisodesView: View {
     @Environment(PlaybackState.self) private var playback
     @Environment(EpisodeCatalog.self) private var catalog
+    @Environment(UserLibraryStore.self) private var library
     @State private var selectedFilter: EpisodeFilter = .all
 
     var body: some View {
@@ -12,10 +13,15 @@ struct EpisodesView: View {
                     VStack(alignment: .leading, spacing: TCIDSpacing.lg) {
                         TCIDAppHeader()
 
-                        Text("Episodes")
-                            .font(TCIDTypography.largeTitle)
-                            .foregroundStyle(TCIDColors.textPrimary)
-                            .padding(.horizontal, TCIDSpacing.md)
+                        VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
+                            Text("Episodes")
+                                .font(TCIDTypography.display)
+                                .foregroundStyle(TCIDColors.textPrimary)
+                            Text("Listen to the latest from the couch.")
+                                .font(TCIDTypography.caption)
+                                .foregroundStyle(TCIDColors.textTertiary)
+                        }
+                        .padding(.horizontal, TCIDSpacing.md)
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: TCIDSpacing.sm) {
@@ -32,29 +38,57 @@ struct EpisodesView: View {
                         }
 
                         if catalog.isLoading {
-                            ProgressView("Loading episodes from Appwrite…")
+                            ProgressView("Loading episodes…")
+                                .tint(TCIDColors.accent)
                                 .font(TCIDTypography.caption)
                                 .foregroundStyle(TCIDColors.textSecondary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, TCIDSpacing.lg)
                         } else {
-                            VStack(spacing: TCIDSpacing.md) {
-                                ForEach(filteredEpisodes) { episode in
+                            VStack(alignment: .leading, spacing: TCIDSpacing.md) {
+                                if selectedFilter == .all || selectedFilter == .newest,
+                                   let featured = catalog.featuredEpisode ?? catalog.episodes.first {
                                     NavigationLink {
-                                        EpisodeDetailView(episode: episode)
+                                        EpisodeDetailView(episode: featured)
                                     } label: {
-                                        EpisodeRowView(
-                                            episode: episode,
-                                            showsNewBadge: episode.id == catalog.featuredEpisode?.id,
-                                            isPlaying: playback.currentEpisode?.id == episode.id && playback.isPlaying
+                                        FeaturedEpisodeCard(
+                                            episode: featured,
+                                            isPlaying: playback.currentEpisode?.id == featured.id && playback.isPlaying
                                         ) {
-                                            playback.togglePlayback(for: episode)
+                                            playback.togglePlayback(for: featured)
                                         }
                                     }
                                     .buttonStyle(.plain)
+                                    .padding(.horizontal, TCIDSpacing.md)
+                                }
+
+                                if listEpisodes.isEmpty {
+                                    emptyFilterState
+                                } else {
+                                    VStack(spacing: 0) {
+                                        ForEach(Array(listEpisodes.enumerated()), id: \.element.id) { index, episode in
+                                            if index > 0 {
+                                                Divider()
+                                                    .background(TCIDColors.separator)
+                                                    .padding(.leading, 72)
+                                            }
+                                            NavigationLink {
+                                                EpisodeDetailView(episode: episode)
+                                            } label: {
+                                                EpisodeRowView(
+                                                    episode: episode,
+                                                    showsNewBadge: false,
+                                                    isPlaying: playback.currentEpisode?.id == episode.id && playback.isPlaying
+                                                ) {
+                                                    playback.togglePlayback(for: episode)
+                                                }
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
+                                    .padding(.horizontal, TCIDSpacing.md)
                                 }
                             }
-                            .padding(.horizontal, TCIDSpacing.md)
                         }
 
                         if let loadError = catalog.loadError {
@@ -74,6 +108,13 @@ struct EpisodesView: View {
         }
     }
 
+    private var listEpisodes: [Episode] {
+        let filtered = filteredEpisodes
+        guard selectedFilter == .all || selectedFilter == .newest else { return filtered }
+        guard let featured = catalog.featuredEpisode ?? catalog.episodes.first else { return filtered }
+        return filtered.filter { $0.id != featured.id }
+    }
+
     private var filteredEpisodes: [Episode] {
         switch selectedFilter {
         case .all, .newest:
@@ -81,8 +122,22 @@ struct EpisodesView: View {
         case .popular:
             return catalog.episodes.sorted { $0.playCount > $1.playCount }
         case .saved:
-            return []
+            return library.savedEpisodes(from: catalog.episodes)
         }
+    }
+
+    @ViewBuilder
+    private var emptyFilterState: some View {
+        VStack(spacing: TCIDSpacing.sm) {
+            Text("No episodes here yet")
+                .font(TCIDTypography.headline)
+                .foregroundStyle(TCIDColors.textPrimary)
+            Text("Try another filter or pull to refresh.")
+                .font(TCIDTypography.caption)
+                .foregroundStyle(TCIDColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, TCIDSpacing.xl)
     }
 }
 
@@ -90,4 +145,5 @@ struct EpisodesView: View {
     EpisodesView()
         .environment(PlaybackState())
         .environment(EpisodeCatalog())
+        .environment(UserLibraryStore())
 }

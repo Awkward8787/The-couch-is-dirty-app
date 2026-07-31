@@ -23,13 +23,118 @@ struct EpisodeArtworkView: View {
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.sm))
+        .overlay(
+            RoundedRectangle(cornerRadius: TCIDRadius.sm)
+                .stroke(TCIDColors.border, lineWidth: 1)
+        )
         .accessibilityHidden(true)
     }
 
     private var placeholder: some View {
-        Image("PodcastLogoDark")
-            .resizable()
-            .scaledToFill()
+        ZStack {
+            TCIDColors.surfaceElevated
+            Image("PodcastLogoDark")
+                .resizable()
+                .scaledToFit()
+                .padding(size * 0.18)
+        }
+    }
+}
+
+struct FeaturedEpisodeCard: View {
+    let episode: Episode
+    var isPlaying: Bool = false
+    var onPlay: () -> Void = {}
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: TCIDSpacing.md) {
+            HStack(alignment: .top, spacing: TCIDSpacing.md) {
+                EpisodeArtworkView(coverArtURL: episode.coverArtURL, size: 88)
+
+                VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
+                    HStack(spacing: TCIDSpacing.xs) {
+                        Circle()
+                            .fill(TCIDColors.accent)
+                            .frame(width: 6, height: 6)
+                        Text("LATEST")
+                            .font(TCIDTypography.micro.weight(.bold))
+                            .foregroundStyle(TCIDColors.accent)
+                            .tracking(0.6)
+                    }
+
+                    Text(episode.title)
+                        .font(TCIDTypography.title)
+                        .foregroundStyle(TCIDColors.textPrimary)
+                        .lineLimit(3)
+
+                    if let description = episode.description {
+                        Text(description)
+                            .font(TCIDTypography.caption)
+                            .foregroundStyle(TCIDColors.textSecondary)
+                            .lineLimit(2)
+                    }
+                }
+            }
+
+            HStack {
+                if let duration = episode.durationSeconds {
+                    Text(DurationFormatter.formatLong(seconds: duration))
+                        .font(TCIDTypography.caption)
+                        .foregroundStyle(TCIDColors.textTertiary)
+                }
+                Spacer()
+                TCIDPlayButton(size: 48, isPlaying: isPlaying, action: onPlay)
+            }
+        }
+        .padding(TCIDSpacing.md)
+        .background(TCIDColors.surfaceElevated)
+        .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: TCIDRadius.lg)
+                .stroke(TCIDColors.border, lineWidth: 1)
+        )
+    }
+}
+
+struct EpisodeRowView: View {
+    let episode: Episode
+    var showsNewBadge = false
+    var isPlaying = false
+    var onPlay: () -> Void = {}
+
+    var body: some View {
+        HStack(alignment: .center, spacing: TCIDSpacing.md) {
+            EpisodeArtworkView(coverArtURL: episode.coverArtURL, size: 56)
+
+            VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
+                if showsNewBadge {
+                    Text("NEW")
+                        .font(TCIDTypography.micro.weight(.bold))
+                        .foregroundStyle(TCIDColors.accent)
+                        .tracking(0.5)
+                }
+
+                Text(episode.title)
+                    .font(TCIDTypography.headline)
+                    .foregroundStyle(TCIDColors.textPrimary)
+                    .lineLimit(2)
+
+                HStack(spacing: TCIDSpacing.xs) {
+                    Text(DurationFormatter.formatDate(episode.publishedAt))
+                    if let duration = episode.durationSeconds {
+                        Text("·")
+                        Text(DurationFormatter.formatLong(seconds: duration))
+                    }
+                }
+                .font(TCIDTypography.caption)
+                .foregroundStyle(TCIDColors.textTertiary)
+            }
+
+            Spacer(minLength: 0)
+
+            TCIDPlayButton(size: 40, isPlaying: isPlaying, action: onPlay)
+        }
+        .padding(.vertical, TCIDSpacing.sm)
     }
 }
 
@@ -41,124 +146,7 @@ struct NowPlayingCard: View {
     var onPlay: () -> Void = {}
 
     var body: some View {
-        TCIDCard {
-            VStack(alignment: .leading, spacing: TCIDSpacing.md) {
-                HStack(alignment: .top, spacing: TCIDSpacing.md) {
-                    EpisodeArtworkView(coverArtURL: episode.coverArtURL, size: 72)
-
-                    VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
-                        HStack(spacing: TCIDSpacing.xs) {
-                            Circle()
-                                .fill(TCIDColors.accent)
-                                .frame(width: 6, height: 6)
-                            Text("NOW PLAYING")
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(TCIDColors.accent)
-                        }
-
-                        Text(episode.title)
-                            .font(TCIDTypography.headline)
-                            .foregroundStyle(TCIDColors.textPrimary)
-                            .lineLimit(2)
-
-                        if let description = episode.description {
-                            Text(description)
-                                .font(TCIDTypography.caption)
-                                .foregroundStyle(TCIDColors.textSecondary)
-                                .lineLimit(2)
-                        }
-                    }
-
-                    Spacer(minLength: 0)
-
-                    VStack(spacing: TCIDSpacing.sm) {
-                        Button { } label: {
-                            Image(systemName: "ellipsis")
-                                .foregroundStyle(TCIDColors.textSecondary)
-                                .frame(width: TCIDSpacing.touchTarget, height: 28)
-                        }
-                        .accessibilityLabel("More options")
-
-                        TCIDPlayButton(size: 52, isPlaying: isPlaying, action: onPlay)
-                    }
-                }
-
-                VStack(spacing: TCIDSpacing.xs) {
-                    TCIDProgressBar(progress: progress)
-                    HStack {
-                        Text(DurationFormatter.format(seconds: elapsedSeconds))
-                        Spacer()
-                        if let duration = episode.durationSeconds {
-                            Text(DurationFormatter.format(seconds: duration))
-                        }
-                    }
-                    .font(TCIDTypography.caption)
-                    .foregroundStyle(TCIDColors.textSecondary)
-                }
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Now playing, \(episode.title)")
-    }
-}
-
-struct EpisodeRowView: View {
-    let episode: Episode
-    var showsNewBadge = false
-    var isPlaying = false
-    var onPlay: () -> Void = {}
-
-    var body: some View {
-        TCIDCard {
-            HStack(alignment: .top, spacing: TCIDSpacing.md) {
-                EpisodeArtworkView(coverArtURL: episode.coverArtURL)
-
-                VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
-                    if showsNewBadge {
-                        HStack(spacing: TCIDSpacing.xs) {
-                            Circle().fill(TCIDColors.accent).frame(width: 6, height: 6)
-                            Text("NEW")
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(TCIDColors.accent)
-                        }
-                    }
-
-                    Text(episode.title)
-                        .font(TCIDTypography.headline)
-                        .foregroundStyle(TCIDColors.textPrimary)
-                        .lineLimit(2)
-
-                    if let description = episode.description {
-                        Text(description)
-                            .font(TCIDTypography.caption)
-                            .foregroundStyle(TCIDColors.textSecondary)
-                            .lineLimit(2)
-                    }
-
-                    HStack(spacing: TCIDSpacing.xs) {
-                        Text(DurationFormatter.formatDate(episode.publishedAt))
-                        if let duration = episode.durationSeconds {
-                            Text("•")
-                            Text(DurationFormatter.formatLong(seconds: duration))
-                        }
-                    }
-                    .font(TCIDTypography.caption)
-                    .foregroundStyle(TCIDColors.textSecondary)
-                }
-
-                Spacer(minLength: 0)
-
-                VStack(spacing: TCIDSpacing.md) {
-                    Button { } label: {
-                        Image(systemName: "ellipsis")
-                            .foregroundStyle(TCIDColors.textSecondary)
-                    }
-                    .accessibilityLabel("More options")
-
-                    TCIDPlayButton(isPlaying: isPlaying, action: onPlay)
-                }
-            }
-        }
+        FeaturedEpisodeCard(episode: episode, isPlaying: isPlaying, onPlay: onPlay)
     }
 }
 
@@ -180,7 +168,11 @@ struct ContinueListeningRow: View {
             TCIDPlayButton(size: 36, action: onPlay)
         }
         .padding(TCIDSpacing.md)
-        .background(TCIDColors.card)
+        .background(TCIDColors.surface)
         .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: TCIDRadius.lg)
+                .stroke(TCIDColors.border, lineWidth: 1)
+        )
     }
 }

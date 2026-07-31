@@ -12,18 +12,20 @@ final class EpisodeCatalog {
     }
 
     func loadFromAppwrite() async {
+        guard !isLoading else { return }
         isLoading = true
         loadError = nil
 
         do {
             let fetched = try await EpisodeService.fetchPublishedEpisodes()
-            episodes = fetched
             if fetched.isEmpty {
-                loadError = "No published episodes found in Appwrite yet."
+                episodes = MockDataService.episodes
+                loadError = "No published episodes in Appwrite yet. Showing offline preview data."
+            } else {
+                episodes = fetched
             }
         } catch {
-            // Do not fall back to mock titles like "Ep. 87" — that hides real data issues.
-            episodes = []
+            episodes = MockDataService.episodes
             loadError = "Could not load episodes from Appwrite: \(error.localizedDescription)"
         }
 

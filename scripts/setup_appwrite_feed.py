@@ -46,6 +46,7 @@ STRING_ATTRS = [
     ("author_id", 64, True),
     ("author_name", 120, True),
     ("author_role", 32, True),
+    ("author_avatar_url", 64, False),
     ("body", 2000, False),
     ("link_url", 2000, False),
     ("image_file_id", 64, False),

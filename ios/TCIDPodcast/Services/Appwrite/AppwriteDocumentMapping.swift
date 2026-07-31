@@ -85,6 +85,7 @@ enum AppwriteDocumentMapping {
         let data = document.data
         let roleRaw = string(from: data, key: "role") ?? UserRole.user.rawValue
         let statusRaw = string(from: data, key: "account_status") ?? AccountStatus.active.rawValue
+        let avatarFileId = string(from: data, key: "avatar_url")
 
         return UserProfile(
             id: documentUUID(userId),
@@ -92,6 +93,7 @@ enum AppwriteDocumentMapping {
             username: string(from: data, key: "username"),
             displayName: string(from: data, key: "display_name"),
             bio: string(from: data, key: "bio"),
+            avatarFileId: avatarFileId,
             avatarURL: url(from: data, key: "avatar_url", bucketId: AppwriteCollections.Bucket.avatars),
             role: UserRole(rawValue: roleRaw) ?? .user,
             accountStatus: AccountStatus(rawValue: statusRaw) ?? .active

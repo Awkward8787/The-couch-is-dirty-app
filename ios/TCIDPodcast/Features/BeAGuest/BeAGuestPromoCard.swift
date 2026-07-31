@@ -40,6 +40,6 @@ struct BeAGuestPromoCard: View {
     NavigationStack {
         BeAGuestPromoCard()
             .padding()
-            .background(Color.black)
+            .background(TCIDColors.background)
     }
 }

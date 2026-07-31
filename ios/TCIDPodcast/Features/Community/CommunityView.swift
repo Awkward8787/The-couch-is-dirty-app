@@ -9,55 +9,43 @@ struct CommunityView: View {
             TCIDScreenContainer {
                 ScrollView {
                     VStack(alignment: .leading, spacing: TCIDSpacing.lg) {
-                        TCIDAppHeader(showsNotificationBadge: false)
+                        TCIDAppHeader()
 
                         VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
                             Text("Community")
-                                .font(TCIDTypography.largeTitle)
+                                .font(TCIDTypography.display)
                                 .foregroundStyle(TCIDColors.textPrimary)
-                            Text("Roles come from Appwrite Teams. Posts live on the Feed tab.")
-                                .font(TCIDTypography.body)
-                                .foregroundStyle(TCIDColors.textSecondary)
+                            Text("Your role, the live feed, and ways to join the show.")
+                                .font(TCIDTypography.caption)
+                                .foregroundStyle(TCIDColors.textTertiary)
                         }
                         .padding(.horizontal, TCIDSpacing.md)
 
                         roleCard
                             .padding(.horizontal, TCIDSpacing.md)
 
-                        Button {
-                            appState.selectedTab = .home
-                        } label: {
-                            HStack {
-                                Image(systemName: "rectangle.stack.fill")
-                                Text("Open live Feed")
-                                Spacer()
-                                Image(systemName: "chevron.right")
+                        TCIDSectionGroup(title: "Explore") {
+                            hubRow(
+                                title: "Open live Feed",
+                                subtitle: "See posts and join the conversation",
+                                icon: "rectangle.stack.fill"
+                            ) {
+                                appState.selectedTab = .home
                             }
-                            .font(TCIDTypography.headline)
-                            .foregroundStyle(TCIDColors.textPrimary)
-                            .padding(TCIDSpacing.md)
-                            .background(TCIDColors.card)
-                            .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, TCIDSpacing.md)
 
-                        NavigationLink {
-                            BeAGuestView()
-                        } label: {
-                            HStack {
-                                Image(systemName: "mic.fill")
-                                Text("Be a Guest")
-                                Spacer()
-                                Image(systemName: "chevron.right")
+                            TCIDGroupedRowDivider()
+
+                            NavigationLink {
+                                BeAGuestView()
+                            } label: {
+                                hubRowLabel(
+                                    title: "Be a Guest",
+                                    subtitle: "Apply to join the couch",
+                                    icon: "mic.fill"
+                                )
                             }
-                            .font(TCIDTypography.headline)
-                            .foregroundStyle(TCIDColors.textPrimary)
-                            .padding(TCIDSpacing.md)
-                            .background(TCIDColors.card)
-                            .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                         .padding(.horizontal, TCIDSpacing.md)
                         .padding(.bottom, TCIDSpacing.xl)
                     }
@@ -68,20 +56,36 @@ struct CommunityView: View {
 
     private var roleCard: some View {
         VStack(alignment: .leading, spacing: TCIDSpacing.sm) {
-            Text("Your role")
+            Text("Your membership")
                 .font(TCIDTypography.caption)
-                .foregroundStyle(TCIDColors.textSecondary)
+                .foregroundStyle(TCIDColors.textTertiary)
+                .textCase(.uppercase)
+                .tracking(0.6)
 
             HStack(spacing: TCIDSpacing.sm) {
-                Text(auth.isAuthenticated ? auth.displayName : "Not signed in")
-                    .font(TCIDTypography.headline)
-                    .foregroundStyle(TCIDColors.textPrimary)
+                TCIDAvatarView(
+                    imageURL: auth.avatarURL,
+                    name: auth.isAuthenticated ? auth.displayName : "Guest",
+                    size: 44
+                )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(auth.isAuthenticated ? auth.displayName : "Not signed in")
+                        .font(TCIDTypography.headline)
+                        .foregroundStyle(TCIDColors.textPrimary)
+
+                    Text(auth.communityRole.badgeTitle)
+                        .font(TCIDTypography.caption)
+                        .foregroundStyle(TCIDColors.textSecondary)
+                }
+
+                Spacer()
 
                 Text(auth.communityRole.badgeTitle.uppercased())
-                    .font(.caption2.weight(.bold))
+                    .font(TCIDTypography.micro.weight(.bold))
                     .foregroundStyle(TCIDColors.accent)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
                     .background(TCIDColors.accentMuted)
                     .clipShape(Capsule())
             }
@@ -94,10 +98,50 @@ struct CommunityView: View {
             .font(TCIDTypography.caption)
             .foregroundStyle(TCIDColors.textSecondary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(TCIDSpacing.md)
-        .background(TCIDColors.card)
+        .background(TCIDColors.surfaceElevated)
         .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
+        .overlay(
+            RoundedRectangle(cornerRadius: TCIDRadius.lg)
+                .stroke(TCIDColors.border, lineWidth: 1)
+        )
+    }
+
+    private func hubRow(
+        title: String,
+        subtitle: String,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            hubRowLabel(title: title, subtitle: subtitle, icon: icon)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func hubRowLabel(title: String, subtitle: String, icon: String) -> some View {
+        HStack(spacing: TCIDSpacing.md) {
+            Image(systemName: icon)
+                .frame(width: 28)
+                .foregroundStyle(TCIDColors.accent)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(TCIDTypography.body.weight(.semibold))
+                    .foregroundStyle(TCIDColors.textPrimary)
+                Text(subtitle)
+                    .font(TCIDTypography.caption)
+                    .foregroundStyle(TCIDColors.textTertiary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(TCIDColors.textTertiary)
+        }
+        .padding(TCIDSpacing.md)
+        .frame(minHeight: TCIDSpacing.touchTarget)
     }
 }
 

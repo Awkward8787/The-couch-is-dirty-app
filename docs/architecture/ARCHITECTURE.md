@@ -2,13 +2,13 @@
 
 ## Overview
 
-Three-tier monorepo: native iOS client, Next.js admin dashboard, Supabase backend.
+Three-tier monorepo: native iOS client, Next.js admin dashboard, **Appwrite** backend (self-hosted).
 
 ```
 ┌─────────────────┐     HTTPS      ┌──────────────────┐
-│  iOS App        │◄──────────────►│  Supabase        │
-│  SwiftUI/MVVM   │                │  Postgres + Auth │
-│  AVFoundation   │                │  Storage + Edge  │
+│  iOS App        │◄──────────────►│  Appwrite        │
+│  SwiftUI/MVVM   │                │  Auth + Databases│
+│  AVFoundation   │                │  Storage + Teams │
 └─────────────────┘                └────────┬─────────┘
                                           │
 ┌─────────────────┐     HTTPS             │
@@ -24,116 +24,96 @@ Three-tier monorepo: native iOS client, Next.js admin dashboard, Supabase backen
 | Layer | Responsibility |
 |-------|----------------|
 | **Views** | SwiftUI UI, accessibility, navigation |
-| **ViewModels** | `@Observable`, async state, user actions |
-| **Services** | Supabase API, audio engine, Keychain |
-| **Models** | Codable types mirroring Postgres schema |
+| **ViewModels / @Observable stores** | Async state, user actions |
+| **Services** | Appwrite SDK, audio engine, feed realtime |
+| **Models** | Codable types aligned with Appwrite collections |
 
-### Key Services (planned)
+### Key services
 
-- `AuthService` — Sign in with Apple, email OTP, session
-- `EpisodeService` — List, search, save, download
-- `AudioPlayerService` — AVPlayer, MPNowPlayingInfoCenter, background
-- `CommunityService` — Posts, comments, reactions
-- `NotificationService` — APNs registration, preferences
+- `AuthService` — Appwrite Account sessions, Teams-based roles
+- `EpisodeService` / `EpisodeCatalog` — Published episodes from Appwrite
+- `FeedService` / `FeedStore` — Home social feed + realtime
+- `AudioPlayerService` — AVPlayer, Lock Screen, background audio
 
-### Audio Pipeline
+### Audio pipeline
 
 ```
 Episode audio URL → AVPlayer → MPNowPlayingInfoCenter
                               → MPRemoteCommandCenter
                               → Background task + interruption handling
-                              → listening_progress sync (authenticated)
+                              → listening progress (authenticated, planned)
 ```
 
-Guest users listen without auth; progress stored locally until sign-in.
+Guest users listen without auth; community posting requires sign-in.
 
 ## Admin (`/admin`)
 
 - Next.js 15 App Router, TypeScript
-- Supabase SSR auth with admin email allowlist
-- Server actions for episode upload, RSS trigger, moderation
+- **Appwrite** server SDK (Phase 7) with admin email allowlist
+- Episode upload, RSS trigger, moderation (planned)
 - Deployed to Vercel; env vars from `.env.local`
 
-## Supabase (`/supabase`)
+## Appwrite
 
-### Tables
+Endpoint: `https://api.tcidpodcast.com/v1` · Project: `tcidpodcast`
 
-| Table | Purpose |
-|-------|---------|
-| `profiles` | User profile, role, notification prefs, account status |
+### Collections (primary)
+
+| Collection | Purpose |
+|------------|---------|
+| `profiles` | User profile, role, account status |
 | `episodes` | Podcast episodes (RSS + manual) |
-| `episode_chapters` | Timestamped chapters |
-| `listening_progress` | Playback position per user |
-| `saved_episodes` | User bookmarks |
-| `episode_downloads` | Offline download records |
-| `community_posts` | Discussions, questions |
-| `comments` | Threaded replies |
-| `reactions` | Likes on posts/comments |
-| `reports` | User content reports |
-| `blocked_users` | User blocks |
-| `moderation_actions` | Audit log |
-| `notifications` | In-app notifications |
-| `rss_sources` | Feed configuration |
-| `rss_sync_logs` | Sync history |
-| `device_push_tokens` | APNs tokens |
-| `app_settings` | Public config (URLs, rate limits) |
-| `episode_plays` | Privacy-friendly analytics |
-| `prohibited_words` | Profanity filter list |
+| `posts` | Home social feed |
+| `post_comments` | Feed comments |
+| `guest_applications` | Be a Guest applications |
+| `favorite_episodes` | User bookmarks |
 
-### Edge Functions
+See `docs/ios/FEED_SETUP.md` and setup scripts under `scripts/`.
 
-| Function | Trigger | Purpose |
-|----------|---------|---------|
-| `rss-sync` | Cron + manual | Parse RSS, dedupe GUID, import episodes |
-| `send-push` | Admin action | APNs notifications |
+### Storage buckets
 
-### RLS Model
+| Bucket | Purpose |
+|--------|---------|
+| `avatars` | Profile avatars |
+| `episode-images` | Cover art |
+| `post-images` | Feed attachments |
+| `guest-uploads` | Guest application files |
 
-- **Anonymous/guest:** Read published episodes and chapters only
-- **Authenticated user:** Own profile, progress, saves, community CRUD (own content)
-- **Moderator:** Review reports, remove content, warn/suspend
-- **Admin:** Episodes, RSS, storage, moderation, analytics
+### RBAC (Teams + permissions)
 
-Helper functions: `is_admin()`, `is_admin_only()`, `is_account_active()`, `is_blocked()`.
+| Team ID | Purpose |
+|---------|---------|
+| `members` | Member-only features |
+| `moderators` | Moderation tools |
+| `admins` | Administrator (sole owner: Silk Bone Jones) |
 
-## Authentication Flow
+iOS resolves roles from Appwrite Teams in `AuthService`. **Collection permissions in Appwrite Console are the security boundary** — client checks are UX only.
 
-1. **Guest** — Browse and play episodes without account
-2. **Community** — Requires account (13+ age gate, guidelines acceptance)
-3. **Sign in with Apple** — Primary OAuth via Supabase Auth
-4. **Email OTP** — Magic link / one-time code via Supabase Auth
-5. **Admin** — Same auth + email in `ADMIN_ALLOWED_EMAILS` + `profiles.role = admin`
+## Authentication flow
 
-## RSS Sync Flow
+1. **Guest listener** — Browse and play episodes without account
+2. **Signed-in user** — Appwrite email/password; default team → `user`
+3. **Member / moderator / admin** — Appwrite Teams membership
+4. **Admin dashboard** — Appwrite Account + `ADMIN_ALLOWED_EMAILS` + `admins` team
 
-```
-Admin sets feed URL → rss_sources
-Cron / manual → rss-sync Edge Function
-  → Fetch HTTPS feed
-  → Parse title, artwork, items
-  → Upsert by rss_guid
-  → Skip manually_edited_fields
-  → Log to rss_sync_logs
-```
+## RSS / episodes
 
-## Community Moderation Flow
+Episodes imported via `scripts/seed_appwrite_episodes.py` or admin tools (planned). Official feed:
 
-```
-User reports content → reports (pending)
-Admin reviews → moderation_actions (audit)
-  → remove_content / warn / suspend / ban
-Reporter notified → notifications
-```
+`https://media.rss.com/the-couch-is-dirty-podcast/feed.xml`
+
+## Community / feed
+
+Home tab: Be a Guest + composer + `posts` collection with Appwrite Realtime.
+
+Community tab: episode discussions (planned); roles displayed from Teams.
 
 ## Security
 
-- HTTPS only; no hardcoded secrets
-- Keychain for iOS tokens
-- Server-side authorization via RLS
-- Rate limiting on posts (`post_rate_limits`)
-- Content hash duplicate detection
-- Input validation (Zod admin, Swift + server)
-- Account deletion via `delete_user_account()` RPC
+- HTTPS only; no API keys in the iOS app
+- Appwrite collection + storage permissions
+- Server API keys only in admin `.env.local` (never commit)
+- Input validation (Zod admin, Swift + Appwrite rules)
 
 ## Deployment
 
@@ -141,15 +121,15 @@ Reporter notified → notifications
 |-----------|--------|
 | iOS | App Store / TestFlight |
 | Admin | Vercel |
-| Supabase | Supabase Cloud (must be live for App Review) |
+| Backend | Self-hosted Appwrite (`api.tcidpodcast.com`) |
 | Legal pages | tcidpodcast.com |
 
-## Design System
+## Design system
 
 - Background: `#000000`
 - Cards: `#1C1C1E`
 - Text: `#FFFFFF` / `#8E8E93`
-- Accent: `#EB1C24` (tabs, progress, badges, primary actions only)
+- Accent: `#EB1C24`
 - SF Symbols, Dynamic Type, 44pt touch targets
 
 Reference mockups: `docs/design-reference/`

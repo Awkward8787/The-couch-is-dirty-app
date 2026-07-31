@@ -5,15 +5,12 @@ import Observation
 @MainActor
 final class AppState {
     var hasCompletedOnboarding: Bool
-    var isAuthenticated: Bool
     var selectedTab: AppTab = .home
 
     init(
-        hasCompletedOnboarding: Bool = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding"),
-        isAuthenticated: Bool = false
+        hasCompletedOnboarding: Bool = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
     ) {
         self.hasCompletedOnboarding = hasCompletedOnboarding
-        self.isAuthenticated = isAuthenticated
     }
 
     func completeOnboarding() {

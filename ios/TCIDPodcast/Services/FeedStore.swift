@@ -76,8 +76,7 @@ final class FeedStore {
             defer { isSubscribing = false }
             do {
                 let subscription = try await AppwriteClient.realtime.subscribe(channels: channels) { [weak self] message in
-                    let events = message.events
-                    let payload = message.payload
+                    guard let events = message.events, let payload = message.payload else { return }
                     Task { @MainActor in
                         self?.handleRealtime(events: events, payload: payload)
                     }
@@ -105,6 +104,7 @@ final class FeedStore {
         authorId: String,
         authorName: String,
         authorRole: CommunityRole,
+        authorAvatarFileId: String?,
         body: String,
         linkText: String,
         imageJPEGData: Data?
@@ -120,6 +120,7 @@ final class FeedStore {
                 authorId: authorId,
                 authorName: authorName,
                 authorRole: authorRole,
+                authorAvatarFileId: authorAvatarFileId,
                 body: body,
                 linkURL: linkURL,
                 imageJPEGData: imageJPEGData
@@ -151,6 +152,15 @@ final class FeedStore {
         }
         try await FeedService.deletePost(postId: post.id)
         posts.removeAll { $0.id == post.id }
+    }
+
+    func reportPost(_ post: FeedPost) async throws {
+        let updated = try await FeedService.reportPost(postId: post.id)
+        upsert(updated, preferFront: false)
+    }
+
+    func visiblePosts(blockedAuthorIds: Set<String>) -> [FeedPost] {
+        posts.filter { !blockedAuthorIds.contains($0.authorId) }
     }
 
     func toggleLike(post: FeedPost, isAuthenticated: Bool) async throws {
@@ -215,6 +225,7 @@ final class FeedStore {
         let kindRaw = payload["post_kind"] as? String ?? FeedPostKind.text.rawValue
         let statusRaw = payload["moderation_status"] as? String ?? FeedModerationStatus.visible.rawValue
         let imageFileId = payload["image_file_id"] as? String
+        let authorAvatarFileId = payload[AppwriteCollections.Posts.authorAvatarUrl] as? String
         let linkRaw = payload["link_url"] as? String
         let link = linkRaw.flatMap { URL(string: $0) }
 
@@ -223,6 +234,12 @@ final class FeedStore {
             authorId: authorId,
             authorName: authorName,
             authorRole: CommunityRole(rawValue: roleRaw) ?? .user,
+            authorAvatarURL: authorAvatarFileId.flatMap {
+                AppwriteStorageURL.viewURL(
+                    bucketId: AppwriteCollections.Bucket.avatars,
+                    fileId: $0
+                )
+            },
             body: body,
             linkURL: link,
             imageFileId: imageFileId,

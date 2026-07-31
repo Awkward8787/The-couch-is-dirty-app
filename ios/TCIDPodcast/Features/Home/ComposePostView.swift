@@ -31,7 +31,7 @@ struct ComposePostView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                TCIDColors.background.ignoresSafeArea()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: TCIDSpacing.lg) {
@@ -130,18 +130,11 @@ struct ComposePostView: View {
                                 .foregroundStyle(TCIDColors.textSecondary)
                         }
 
-                        Button {
+                        TCIDPrimaryButton(title: feed.isPosting ? "Posting…" : "Post") {
                             Task { await submit() }
-                        } label: {
-                            Text(feed.isPosting ? "Posting…" : "Post")
-                                .font(TCIDTypography.headline)
-                                .foregroundStyle(Color.black)
-                                .frame(maxWidth: .infinity)
-                                .frame(minHeight: TCIDSpacing.touchTarget)
-                                .background(canSubmit ? Color.white : Color.white.opacity(0.4))
-                                .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.md))
                         }
                         .disabled(!canSubmit)
+                        .opacity(canSubmit ? 1 : 0.5)
                     }
                     .padding(TCIDSpacing.lg)
                 }
@@ -201,6 +194,7 @@ struct ComposePostView: View {
                 authorId: user.id,
                 authorName: auth.displayName,
                 authorRole: auth.communityRole,
+                authorAvatarFileId: auth.userProfile?.avatarFileId,
                 body: bodyText,
                 linkText: linkText,
                 imageJPEGData: imageData

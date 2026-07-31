@@ -35,6 +35,7 @@ enum AppwriteCollections {
         static let authorId = "author_id"
         static let authorName = "author_name"
         static let authorRole = "author_role"
+        static let authorAvatarUrl = "author_avatar_url"
         static let body = "body"
         static let linkUrl = "link_url"
         static let imageFileId = "image_file_id"
