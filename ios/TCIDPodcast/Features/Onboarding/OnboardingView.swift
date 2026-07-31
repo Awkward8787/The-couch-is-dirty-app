@@ -10,7 +10,7 @@ struct OnboardingView: View {
             VStack(spacing: 0) {
                 Spacer()
 
-                Image("PodcastLogo")
+                Image("PodcastLogoDark")
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: 260)

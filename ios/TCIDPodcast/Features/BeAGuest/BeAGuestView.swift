@@ -43,7 +43,7 @@ struct BeAGuestView: View {
 
     private var header: some View {
         VStack(spacing: TCIDSpacing.md) {
-            Image("PodcastLogo")
+            Image("PodcastLogoDark")
                 .resizable()
                 .scaledToFit()
                 .frame(height: 48)

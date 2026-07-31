@@ -26,6 +26,7 @@ final class FeedStore {
     func createPost(
         authorId: String,
         authorName: String,
+        authorRole: CommunityRole,
         body: String,
         linkText: String,
         imageJPEGData: Data?
@@ -39,6 +40,7 @@ final class FeedStore {
             let created = try await FeedService.createPost(
                 authorId: authorId,
                 authorName: authorName,
+                authorRole: authorRole,
                 body: body,
                 linkURL: linkURL,
                 imageJPEGData: imageJPEGData

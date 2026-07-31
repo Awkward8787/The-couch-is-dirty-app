@@ -25,6 +25,7 @@ enum FeedService {
     static func createPost(
         authorId: String,
         authorName: String,
+        authorRole: CommunityRole,
         body: String,
         linkURL: URL?,
         imageJPEGData: Data?
@@ -35,6 +36,9 @@ enum FeedService {
         }
         guard trimmed.count <= maxBodyLength else {
             throw FeedServiceError.bodyTooLong
+        }
+        guard authorRole.canPost else {
+            throw FeedServiceError.signInRequired
         }
 
         var imageFileId: String?
@@ -72,6 +76,7 @@ enum FeedService {
         var data: [String: Any] = [
             "author_id": authorId,
             "author_name": authorName,
+            "author_role": authorRole.rawValue,
             "body": trimmed,
             "post_kind": kind.rawValue,
             "like_count": 0,
@@ -127,6 +132,7 @@ enum FeedService {
         let authorId = AppwriteDocumentMapping.string(from: data, key: "author_id") ?? "unknown"
         let authorName = AppwriteDocumentMapping.string(from: data, key: "author_name") ?? "Couch Fam"
         let kindRaw = AppwriteDocumentMapping.string(from: data, key: "post_kind") ?? FeedPostKind.text.rawValue
+        let roleRaw = AppwriteDocumentMapping.string(from: data, key: "author_role") ?? CommunityRole.user.rawValue
         let imageFileId = AppwriteDocumentMapping.string(from: data, key: "image_file_id")
         let link = AppwriteDocumentMapping.url(from: data, key: "link_url")
         let createdAt = AppwriteDateParser.parse(document.createdAt) ?? Date()
@@ -135,6 +141,7 @@ enum FeedService {
             id: document.id,
             authorId: authorId,
             authorName: authorName,
+            authorRole: CommunityRole(rawValue: roleRaw) ?? .user,
             body: body,
             linkURL: link,
             imageFileId: imageFileId,

@@ -11,45 +11,15 @@ struct HomeView: View {
         NavigationStack {
             TCIDScreenContainer {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: TCIDSpacing.lg) {
+                    VStack(alignment: .leading, spacing: TCIDSpacing.md) {
                         TCIDAppHeader(showsNotificationBadge: false)
-
-                        VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
-                            Text("Couch Feed")
-                                .font(TCIDTypography.largeTitle)
-                                .foregroundStyle(TCIDColors.textPrimary)
-                            Text("Share thoughts, photos, and video links. Keep it light on the server.")
-                                .font(TCIDTypography.caption)
-                                .foregroundStyle(TCIDColors.textSecondary)
-                        }
-                        .padding(.horizontal, TCIDSpacing.md)
 
                         composerPrompt
                             .padding(.horizontal, TCIDSpacing.md)
 
-                        if feed.isLoading && feed.posts.isEmpty {
-                            ProgressView("Loading the couch…")
-                                .tint(TCIDColors.accent)
-                                .font(TCIDTypography.caption)
-                                .foregroundStyle(TCIDColors.textSecondary)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, TCIDSpacing.lg)
-                        }
-
-                        if let loadError = feed.loadError, feed.posts.isEmpty {
-                            Text(loadError)
-                                .font(TCIDTypography.caption)
-                                .foregroundStyle(TCIDColors.destructive)
-                                .padding(.horizontal, TCIDSpacing.md)
-                        }
-
-                        LazyVStack(spacing: TCIDSpacing.md) {
-                            ForEach(feed.posts) { post in
-                                FeedPostCard(post: post)
-                            }
-                        }
-                        .padding(.horizontal, TCIDSpacing.md)
-                        .padding(.bottom, TCIDSpacing.xl)
+                        feedContent
+                            .padding(.horizontal, TCIDSpacing.md)
+                            .padding(.bottom, TCIDSpacing.xl)
                     }
                 }
                 .refreshable {
@@ -63,8 +33,53 @@ struct HomeView: View {
                 LoginView()
             }
             .task {
-                if feed.posts.isEmpty {
-                    await feed.load()
+                await feed.load()
+            }
+            .onAppear {
+                Task { await feed.load() }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var feedContent: some View {
+        if feed.isLoading && feed.posts.isEmpty {
+            ProgressView("Loading feed…")
+                .tint(TCIDColors.accent)
+                .font(TCIDTypography.caption)
+                .foregroundStyle(TCIDColors.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, TCIDSpacing.xl)
+        } else if let loadError = feed.loadError, feed.posts.isEmpty {
+            VStack(alignment: .leading, spacing: TCIDSpacing.sm) {
+                Text("Feed unavailable")
+                    .font(TCIDTypography.headline)
+                    .foregroundStyle(TCIDColors.textPrimary)
+                Text(loadError)
+                    .font(TCIDTypography.caption)
+                    .foregroundStyle(TCIDColors.destructive)
+                Text("Create the Appwrite `posts` table + `post-images` bucket (docs/ios/FEED_SETUP.md), then pull to refresh.")
+                    .font(TCIDTypography.caption)
+                    .foregroundStyle(TCIDColors.textSecondary)
+            }
+            .padding(TCIDSpacing.md)
+            .background(TCIDColors.card)
+            .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
+        } else if feed.posts.isEmpty {
+            VStack(spacing: TCIDSpacing.sm) {
+                Text("No posts yet")
+                    .font(TCIDTypography.headline)
+                    .foregroundStyle(TCIDColors.textPrimary)
+                Text("Be the first to share on the couch today.")
+                    .font(TCIDTypography.caption)
+                    .foregroundStyle(TCIDColors.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, TCIDSpacing.xl)
+        } else {
+            LazyVStack(spacing: TCIDSpacing.md) {
+                ForEach(feed.posts) { post in
+                    FeedPostCard(post: post)
                 }
             }
         }
@@ -72,7 +87,7 @@ struct HomeView: View {
 
     private var composerPrompt: some View {
         Button {
-            if auth.isAuthenticated {
+            if auth.isAuthenticated, auth.communityRole.canPost {
                 showsComposer = true
             } else {
                 showsLogin = true
@@ -87,7 +102,7 @@ struct HomeView: View {
                             .foregroundStyle(TCIDColors.textSecondary)
                     }
 
-                Text(auth.isAuthenticated ? "What’s on your mind?" : "Sign in to post on the couch")
+                Text(auth.communityRole.canPost ? "What’s on your mind?" : "Sign in to post")
                     .font(TCIDTypography.caption)
                     .foregroundStyle(TCIDColors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -100,7 +115,6 @@ struct HomeView: View {
             .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(auth.isAuthenticated ? "Create a post" : "Sign in to post")
     }
 }
 

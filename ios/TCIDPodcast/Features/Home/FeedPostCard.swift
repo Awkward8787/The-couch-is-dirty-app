@@ -16,9 +16,22 @@ struct FeedPostCard: View {
                     }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(post.authorName)
-                        .font(TCIDTypography.caption.weight(.semibold))
-                        .foregroundStyle(TCIDColors.textPrimary)
+                    HStack(spacing: TCIDSpacing.xs) {
+                        Text(post.authorName)
+                            .font(TCIDTypography.caption.weight(.semibold))
+                            .foregroundStyle(TCIDColors.textPrimary)
+
+                        if post.authorRole != .guest {
+                            Text(post.authorRole.badgeTitle.uppercased())
+                                .font(.caption2.weight(.bold))
+                                .foregroundStyle(TCIDColors.accent)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(TCIDColors.accentMuted)
+                                .clipShape(Capsule())
+                        }
+                    }
+
                     Text(post.createdAt, style: .relative)
                         .font(.caption2)
                         .foregroundStyle(TCIDColors.textSecondary)
@@ -82,23 +95,4 @@ struct FeedPostCard: View {
         .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
         .accessibilityElement(children: .contain)
     }
-}
-
-#Preview {
-    FeedPostCard(
-        post: FeedPost(
-            id: "1",
-            authorId: "a",
-            authorName: "Jasmine",
-            body: "This episode hit different.",
-            linkURL: URL(string: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"),
-            imageFileId: nil,
-            imageURL: nil,
-            kind: .link,
-            createdAt: Date(),
-            likeCount: 0
-        )
-    )
-    .padding()
-    .background(Color.black)
 }

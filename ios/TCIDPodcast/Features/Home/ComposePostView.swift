@@ -144,6 +144,7 @@ struct ComposePostView: View {
             try await feed.createPost(
                 authorId: user.id,
                 authorName: auth.displayName,
+                authorRole: auth.communityRole,
                 body: bodyText,
                 linkText: linkText,
                 imageJPEGData: imageData

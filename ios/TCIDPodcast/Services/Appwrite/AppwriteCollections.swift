@@ -30,4 +30,15 @@ enum AppwriteCollections {
         static let moderators = "moderators"
         static let admins = "admins"
     }
+
+    enum Posts {
+        static let authorId = "author_id"
+        static let authorName = "author_name"
+        static let authorRole = "author_role"
+        static let body = "body"
+        static let linkUrl = "link_url"
+        static let imageFileId = "image_file_id"
+        static let postKind = "post_kind"
+        static let likeCount = "like_count"
+    }
 }

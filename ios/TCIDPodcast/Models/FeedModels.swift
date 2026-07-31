@@ -10,6 +10,7 @@ struct FeedPost: Identifiable, Hashable, Sendable {
     let id: String
     var authorId: String
     var authorName: String
+    var authorRole: CommunityRole
     var body: String
     var linkURL: URL?
     var imageFileId: String?

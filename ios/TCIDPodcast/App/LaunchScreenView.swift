@@ -18,7 +18,7 @@ struct LaunchScreenView: View {
             VStack(spacing: TCIDSpacing.lg) {
                 Spacer()
 
-                Image("PodcastLogo")
+                Image("PodcastLogoDark")
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: 220)

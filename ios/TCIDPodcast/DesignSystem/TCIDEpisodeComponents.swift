@@ -27,7 +27,7 @@ struct EpisodeArtworkView: View {
     }
 
     private var placeholder: some View {
-        Image("PodcastLogo")
+        Image("PodcastLogoDark")
             .resizable()
             .scaledToFill()
     }

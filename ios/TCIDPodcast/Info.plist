@@ -7,7 +7,7 @@
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>
 		<key>UIImageName</key>
-		<string>PodcastLogo</string>
+		<string>PodcastLogoDark</string>
 		<key>UIImageRespectsSafeAreaInsets</key>
 		<true/>
 	</dict>
