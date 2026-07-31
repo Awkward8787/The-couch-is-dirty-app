@@ -35,6 +35,7 @@ Warm charcoal studio — dim, focused, editorial. Like a podcast booth at night:
 - **Filter chip selected** — accent border + accent text (not solid fill)
 - **Play button** — white circle, accent icon
 - **Cards** — surface bg, 16pt radius, no shadow (depth via surface tiers)
+- **Feed short video** — 9:16 frame, max 60s, MP4/MOV ≤30 MB, play overlay on `surfaceOverlay`
 
 ## 5. Layout Principles
 
@@ -49,8 +50,8 @@ Three tiers only: background → surface → surfaceElevated. No drop shadows; u
 
 ## 7. Do's and Don'ts
 
-**Do:** Restrain accent; use wordmark on launch/onboarding; group profile rows.  
-**Don't:** Pure `#000` full screens; solid red filter chips; fake notification badges; dev copy in UI.
+**Do:** Restrain accent; use wordmark on launch/onboarding; group profile rows; vertical 9:16 for feed clips.  
+**Don't:** Pure `#000` full screens; solid red filter chips; fake notification badges; dev copy in UI; landscape-only feed videos.
 
 ## 8. Responsive Behavior
 

@@ -38,7 +38,7 @@ Or paste the key once in chat and ask Cursor to run:
 python3 scripts/setup_appwrite_feed.py
 ```
 
-This creates/upgrades `posts` (incl. `comment_count`, `is_edited`, `moderation_status`), `post_comments`, and `post-images`.
+This creates/upgrades `posts` (incl. `comment_count`, `is_edited`, `moderation_status`, `video_file_id`), `post_comments`, `post-images`, and **`post-videos`** (≤60s MP4/MOV clips, max 30 MB).
 
 ### Step 3 — Delete the key
 

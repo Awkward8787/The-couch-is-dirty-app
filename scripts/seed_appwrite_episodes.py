@@ -58,6 +58,7 @@ def fetch_rss_episodes() -> list[dict]:
             continue
 
         description = (item.findtext("description") or "").strip()
+        description = re.sub(r"<!\[CDATA\[|<!\{CDATA\{|CDATA\[|\]\]>", " ", description, flags=re.I)
         description = re.sub("<[^<]+?>", "", description)
         description = re.sub(r"\s+", " ", description).strip()
 

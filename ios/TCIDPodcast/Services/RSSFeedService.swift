@@ -33,9 +33,9 @@ enum RSSFeedService {
             rssGuid: item.guid,
             source: .rss,
             status: .published,
-            title: item.title,
+            title: EpisodeTextSanitizer.sanitize(item.title) ?? item.title,
             slug: slugify(item.title),
-            description: item.description,
+            description: EpisodeTextSanitizer.sanitize(item.description),
             showNotes: nil,
             audioURL: item.audioURL,
             coverArtURL: item.coverArtURL,
@@ -143,8 +143,8 @@ private final class RSSFeedParser: NSObject, XMLParserDelegate {
 
         if isInsideItem, name != "item" {
             let value = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !value.isEmpty {
-                currentFields[name] = stripHTML(from: value)
+            if let sanitized = EpisodeTextSanitizer.sanitize(value) {
+                currentFields[name] = sanitized
             }
         }
 
@@ -182,18 +182,6 @@ private final class RSSFeedParser: NSObject, XMLParserDelegate {
             return String(elementName.split(separator: ":").last ?? Substring(elementName))
         }
         return elementName
-    }
-
-    private func stripHTML(from value: String) -> String {
-        value
-            .replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
-            .replacingOccurrences(of: "&nbsp;", with: " ")
-            .replacingOccurrences(of: "&amp;", with: "&")
-            .replacingOccurrences(of: "&lt;", with: "<")
-            .replacingOccurrences(of: "&gt;", with: ">")
-            .replacingOccurrences(of: "&quot;", with: "\"")
-            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func parseDuration(_ value: String?) -> Int? {

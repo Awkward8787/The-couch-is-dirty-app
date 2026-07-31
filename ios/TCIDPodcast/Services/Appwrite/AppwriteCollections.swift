@@ -22,6 +22,7 @@ enum AppwriteCollections {
         static let avatars = "avatars"
         static let episodeImages = "episode-images"
         static let postImages = "post-images"
+        static let postVideos = "post-videos"
         static let guestUploads = "guest-uploads"
     }
 
@@ -39,6 +40,8 @@ enum AppwriteCollections {
         static let body = "body"
         static let linkUrl = "link_url"
         static let imageFileId = "image_file_id"
+        static let videoFileId = "video_file_id"
+        static let videoDurationSeconds = "video_duration_seconds"
         static let postKind = "post_kind"
         static let likeCount = "like_count"
         static let commentCount = "comment_count"

@@ -35,10 +35,11 @@ enum FeedService {
         authorAvatarFileId: String?,
         body: String,
         linkURL: URL?,
-        imageJPEGData: Data?
+        imageJPEGData: Data?,
+        videoUpload: FeedVideoValidator.ValidatedVideo? = nil
     ) async throws -> FeedPost {
         let trimmed = body.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty || linkURL != nil || imageJPEGData != nil else {
+        guard !trimmed.isEmpty || linkURL != nil || imageJPEGData != nil || videoUpload != nil else {
             throw FeedServiceError.emptyPost
         }
         guard trimmed.count <= maxBodyLength else {
@@ -50,9 +51,32 @@ enum FeedService {
         if let linkURL, !isSafeURL(linkURL) {
             throw FeedServiceError.unsafeLink
         }
+        if videoUpload != nil, imageJPEGData != nil {
+            throw FeedServiceError.singleMediaOnly
+        }
+
+        var videoFileId: String?
+        if let videoUpload {
+            let file = InputFile.fromData(
+                videoUpload.data,
+                filename: videoUpload.filename,
+                mimeType: videoUpload.mimeType
+            )
+            let uploaded = try await AppwriteClient.storage.createFile(
+                bucketId: AppwriteCollections.Bucket.postVideos,
+                fileId: ID.unique(),
+                file: file,
+                permissions: [
+                    Permission.read(Role.any()),
+                    Permission.update(Role.user(authorId)),
+                    Permission.delete(Role.user(authorId)),
+                ]
+            )
+            videoFileId = uploaded.id
+        }
 
         var imageFileId: String?
-        if let imageJPEGData {
+        if let imageJPEGData, videoFileId == nil {
             guard imageJPEGData.count <= maxImageBytes else {
                 throw FeedServiceError.imageTooLarge
             }
@@ -75,7 +99,9 @@ enum FeedService {
         }
 
         let kind: FeedPostKind
-        if imageFileId != nil {
+        if videoFileId != nil {
+            kind = .video
+        } else if imageFileId != nil {
             kind = .image
         } else if linkURL != nil {
             kind = .link
@@ -100,6 +126,12 @@ enum FeedService {
         }
         if let imageFileId {
             data["image_file_id"] = imageFileId
+        }
+        if let videoFileId {
+            data[AppwriteCollections.Posts.videoFileId] = videoFileId
+        }
+        if let videoUpload {
+            data[AppwriteCollections.Posts.videoDurationSeconds] = videoUpload.durationSeconds
         }
         if let authorAvatarFileId, !authorAvatarFileId.isEmpty {
             data[AppwriteCollections.Posts.authorAvatarUrl] = authorAvatarFileId
@@ -126,6 +158,8 @@ enum FeedService {
             data.removeValue(forKey: "comment_count")
             data.removeValue(forKey: "is_edited")
             data.removeValue(forKey: "moderation_status")
+            data.removeValue(forKey: AppwriteCollections.Posts.videoFileId)
+            data.removeValue(forKey: AppwriteCollections.Posts.videoDurationSeconds)
             let document = try await AppwriteClient.databases.createDocument(
                 databaseId: AppConfig.appwriteDatabaseId,
                 collectionId: AppwriteCollections.Collection.posts,
@@ -342,6 +376,10 @@ enum FeedService {
         let statusRaw = AppwriteDocumentMapping.string(from: data, key: "moderation_status")
             ?? FeedModerationStatus.visible.rawValue
         let imageFileId = AppwriteDocumentMapping.string(from: data, key: "image_file_id")
+        let videoFileId = AppwriteDocumentMapping.string(
+            from: data,
+            key: AppwriteCollections.Posts.videoFileId
+        )
         let authorAvatarFileId = AppwriteDocumentMapping.string(
             from: data,
             key: AppwriteCollections.Posts.authorAvatarUrl
@@ -370,6 +408,17 @@ enum FeedService {
                     fileId: $0
                 )
             },
+            videoFileId: videoFileId,
+            videoURL: videoFileId.flatMap {
+                AppwriteStorageURL.viewURL(
+                    bucketId: AppwriteCollections.Bucket.postVideos,
+                    fileId: $0
+                )
+            },
+            videoDurationSeconds: AppwriteDocumentMapping.int(
+                from: data,
+                key: AppwriteCollections.Posts.videoDurationSeconds
+            ),
             kind: FeedPostKind(rawValue: kindRaw) ?? .text,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -399,6 +448,11 @@ enum FeedServiceError: LocalizedError {
     case emptyPost
     case bodyTooLong
     case imageTooLarge
+    case videoTooLong
+    case videoTooLarge
+    case invalidVideo
+    case invalidVideoFormat
+    case singleMediaOnly
     case mappingFailed
     case signInRequired
     case unsafeLink
@@ -407,11 +461,21 @@ enum FeedServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .emptyPost:
-            "Write something, add a link, or attach a photo."
+            "Write something, add a link, or attach a photo or short video."
         case .bodyTooLong:
             "Keep it under \(FeedService.maxBodyLength) characters."
         case .imageTooLarge:
             "That photo is too large. Try a smaller image."
+        case .videoTooLong:
+            "Videos must be \(Int(FeedVideoValidator.maxDurationSeconds)) seconds or less."
+        case .videoTooLarge:
+            "That video is too large. Trim or export a smaller clip (max 30 MB)."
+        case .invalidVideo:
+            "Couldn’t read that video. Try another clip."
+        case .invalidVideoFormat:
+            "Use MP4 or MOV for feed videos."
+        case .singleMediaOnly:
+            "Choose a photo or a video — not both."
         case .mappingFailed:
             "Could not read the post after saving it."
         case .signInRequired:

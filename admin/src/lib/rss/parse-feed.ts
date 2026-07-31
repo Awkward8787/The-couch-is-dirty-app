@@ -16,7 +16,11 @@ export type RssEpisodePayload = {
 };
 
 function stripHtml(value: string): string {
-  return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return value
+    .replace(/<!\[CDATA\[|<!\{CDATA\{|CDATA\[|\]\]>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function slugify(title: string): string {

@@ -4,6 +4,7 @@ enum FeedPostKind: String, Codable, Sendable {
     case text
     case link
     case image
+    case video
 }
 
 enum FeedModerationStatus: String, Codable, Sendable {
@@ -23,6 +24,9 @@ struct FeedPost: Identifiable, Hashable, Sendable {
     var linkURL: URL?
     var imageFileId: String?
     var imageURL: URL?
+    var videoFileId: String?
+    var videoURL: URL?
+    var videoDurationSeconds: Int?
     var kind: FeedPostKind
     let createdAt: Date
     var updatedAt: Date?

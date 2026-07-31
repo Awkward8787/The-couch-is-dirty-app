@@ -142,7 +142,13 @@ struct FeedPostCard: View {
 
     @ViewBuilder
     private var media: some View {
-        if let imageURL = post.imageURL {
+        if let videoURL = post.videoURL {
+            FeedShortVideoPlayer(url: videoURL) {
+                if playback.isPlaying {
+                    playback.toggleCurrentPlayback()
+                }
+            }
+        } else if let imageURL = post.imageURL {
             AsyncImage(url: imageURL) { phase in
                 switch phase {
                 case .success(let image):

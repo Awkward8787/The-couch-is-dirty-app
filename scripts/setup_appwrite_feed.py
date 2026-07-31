@@ -26,6 +26,7 @@ PROJECT_ID = os.environ.get("APPWRITE_PROJECT_ID", "tcidpodcast")
 DATABASE_ID = os.environ.get("APPWRITE_DATABASE_ID", "episodes")
 POSTS_ID = os.environ.get("APPWRITE_POSTS_COLLECTION_ID", "posts")
 BUCKET_ID = os.environ.get("APPWRITE_POST_IMAGES_BUCKET_ID", "post-images")
+VIDEO_BUCKET_ID = os.environ.get("APPWRITE_POST_VIDEOS_BUCKET_ID", "post-videos")
 
 # Collection-level defaults; documents still set their own permissions.
 POSTS_PERMISSIONS = [
@@ -50,6 +51,7 @@ STRING_ATTRS = [
     ("body", 2000, False),
     ("link_url", 2000, False),
     ("image_file_id", 64, False),
+    ("video_file_id", 64, False),
     ("post_kind", 16, True),
     ("moderation_status", 32, False),
 ]
@@ -360,6 +362,41 @@ def ensure_post_images_bucket(api_key: str) -> None:
     print(f"created: bucket `{BUCKET_ID}`")
 
 
+def video_bucket_exists(api_key: str) -> bool:
+    status, _ = request(
+        "GET",
+        f"/storage/buckets/{VIDEO_BUCKET_ID}",
+        api_key,
+        ok_statuses={200, 404},
+    )
+    return status == 200
+
+
+def ensure_post_videos_bucket(api_key: str) -> None:
+    if video_bucket_exists(api_key):
+        print(f"ok: bucket `{VIDEO_BUCKET_ID}` already exists")
+        return
+
+    request(
+        "POST",
+        "/storage/buckets",
+        api_key,
+        {
+            "bucketId": VIDEO_BUCKET_ID,
+            "name": "Post Videos",
+            "permissions": BUCKET_PERMISSIONS,
+            "fileSecurity": True,
+            "enabled": True,
+            "maximumFileSize": 30_000_000,
+            "allowedFileExtensions": ["mp4", "mov", "m4v"],
+            "compression": "none",
+            "encryption": True,
+            "antivirus": False,
+        },
+    )
+    print(f"created: bucket `{VIDEO_BUCKET_ID}`")
+
+
 def main() -> int:
     api_key = require_api_key()
     print(f"endpoint={ENDPOINT}")
@@ -373,10 +410,12 @@ def main() -> int:
             ensure_string_attribute(api_key, key, size, required)
         ensure_integer_attribute(api_key, "like_count", required=False, default=0)
         ensure_integer_attribute(api_key, "comment_count", required=False, default=0)
+        ensure_integer_attribute(api_key, "video_duration_seconds", required=False, default=0)
         ensure_boolean_attribute(api_key, "is_edited", required=False, default=False)
         ensure_created_at_index(api_key)
         ensure_comments_collection(api_key)
         ensure_post_images_bucket(api_key)
+        ensure_post_videos_bucket(api_key)
     except RuntimeError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

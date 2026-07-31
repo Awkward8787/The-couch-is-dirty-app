@@ -54,7 +54,8 @@ enum AppwriteDocumentMapping {
 
     static func episode(from document: Document<[String: AnyCodable]>) -> Episode? {
         let data = document.data
-        guard let title = string(from: data, key: "title"), !title.isEmpty else { return nil }
+        guard let rawTitle = string(from: data, key: "title"),
+              let title = EpisodeTextSanitizer.sanitize(rawTitle) else { return nil }
 
         let sourceRaw = string(from: data, key: "source") ?? EpisodeSource.rss.rawValue
         let statusRaw = string(from: data, key: "status") ?? EpisodeStatus.published.rawValue
@@ -67,8 +68,8 @@ enum AppwriteDocumentMapping {
             status: EpisodeStatus(rawValue: statusRaw) ?? .draft,
             title: title,
             slug: string(from: data, key: "slug"),
-            description: string(from: data, key: "description"),
-            showNotes: string(from: data, key: "show_notes"),
+            description: EpisodeTextSanitizer.sanitize(string(from: data, key: "description")),
+            showNotes: EpisodeTextSanitizer.sanitize(string(from: data, key: "show_notes")),
             audioURL: url(from: data, key: "audio_url"),
             coverArtURL: url(from: data, key: "cover_art_url", bucketId: AppwriteCollections.Bucket.episodeImages),
             durationSeconds: int(from: data, key: "duration_seconds"),

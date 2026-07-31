@@ -107,7 +107,8 @@ final class FeedStore {
         authorAvatarFileId: String?,
         body: String,
         linkText: String,
-        imageJPEGData: Data?
+        imageJPEGData: Data?,
+        videoUpload: FeedVideoValidator.ValidatedVideo? = nil
     ) async throws {
         guard !isPosting else { return }
         isPosting = true
@@ -123,7 +124,8 @@ final class FeedStore {
                 authorAvatarFileId: authorAvatarFileId,
                 body: body,
                 linkURL: linkURL,
-                imageJPEGData: imageJPEGData
+                imageJPEGData: imageJPEGData,
+                videoUpload: videoUpload
             )
             upsert(created, preferFront: true)
         } catch {
@@ -225,6 +227,7 @@ final class FeedStore {
         let kindRaw = payload["post_kind"] as? String ?? FeedPostKind.text.rawValue
         let statusRaw = payload["moderation_status"] as? String ?? FeedModerationStatus.visible.rawValue
         let imageFileId = payload["image_file_id"] as? String
+        let videoFileId = payload[AppwriteCollections.Posts.videoFileId] as? String
         let authorAvatarFileId = payload[AppwriteCollections.Posts.authorAvatarUrl] as? String
         let linkRaw = payload["link_url"] as? String
         let link = linkRaw.flatMap { URL(string: $0) }
@@ -249,6 +252,15 @@ final class FeedStore {
                     fileId: $0
                 )
             },
+            videoFileId: videoFileId,
+            videoURL: videoFileId.flatMap {
+                AppwriteStorageURL.viewURL(
+                    bucketId: AppwriteCollections.Bucket.postVideos,
+                    fileId: $0
+                )
+            },
+            videoDurationSeconds: (payload[AppwriteCollections.Posts.videoDurationSeconds] as? Int)
+                ?? (payload[AppwriteCollections.Posts.videoDurationSeconds] as? Double).map(Int.init),
             kind: FeedPostKind(rawValue: kindRaw) ?? .text,
             createdAt: AppwriteDateParser.parse(createdRaw ?? "") ?? Date(),
             updatedAt: updatedRaw.flatMap { AppwriteDateParser.parse($0) },
@@ -308,7 +320,7 @@ final class FeedStore {
             return "Feed isn’t set up in Appwrite yet. Create the posts table (see docs/ios/FEED_SETUP.md)."
         }
         if message.lowercased().contains("bucket") {
-            return "Photo bucket missing. Create the post-images bucket in Appwrite."
+            return "Photo or video bucket missing. Run docs/ios/FEED_SETUP.md (post-images / post-videos)."
         }
         return message
     }
