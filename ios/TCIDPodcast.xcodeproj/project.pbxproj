@@ -65,6 +65,7 @@
 			);
 			name = TCIDPodcast;
 			packageProductDependencies = (
+				6C69F7173014E89A00E3E0CF /* Appwrite */,
 			);
 			productName = TCIDPodcast;
 			productReference = 6C69F7063014E89900E3E0CF /* TCIDPodcast.app */;
@@ -94,6 +95,9 @@
 			);
 			mainGroup = 6C69F6FD3014E89900E3E0CF;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6C69F7163014E89A00E3E0CF /* XCRemoteSwiftPackageReference "sdk-for-apple" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6C69F7073014E89900E3E0CF /* Products */;
 			projectDirPath = "";
@@ -338,6 +342,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6C69F7163014E89A00E3E0CF /* XCRemoteSwiftPackageReference "sdk-for-apple" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/appwrite/sdk-for-apple";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 18.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6C69F7173014E89A00E3E0CF /* Appwrite */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6C69F7163014E89A00E3E0CF /* XCRemoteSwiftPackageReference "sdk-for-apple" */;
+			productName = Appwrite;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 6C69F6FE3014E89900E3E0CF /* Project object */;
 }

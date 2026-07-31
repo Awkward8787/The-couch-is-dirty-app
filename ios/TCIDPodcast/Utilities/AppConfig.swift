@@ -12,18 +12,17 @@ enum AppConfig {
         return plist
     }()
 
-    static var supabaseURL: URL {
-        if
-            let urlString = secrets["SUPABASE_URL"] as? String,
-            let url = URL(string: urlString)
-        {
-            return url
-        }
-        return URL(string: "https://zqbkznmwyvulxbzwsgea.supabase.co")!
+    /// Self-hosted Appwrite API endpoint (no trailing slash).
+    static var appwriteEndpoint: String {
+        secrets["APPWRITE_ENDPOINT"] as? String ?? "https://api.tcidpodcast.com/v1"
     }
 
-    static var supabaseAnonKey: String {
-        secrets["SUPABASE_ANON_KEY"] as? String ?? ""
+    static var appwriteProjectId: String {
+        secrets["APPWRITE_PROJECT_ID"] as? String ?? "tcidpodcast"
+    }
+
+    static var appwriteDatabaseId: String {
+        secrets["APPWRITE_DATABASE_ID"] as? String ?? AppwriteCollections.databaseId
     }
 
     static let supportEmail = "info@tcidpodcast.com"

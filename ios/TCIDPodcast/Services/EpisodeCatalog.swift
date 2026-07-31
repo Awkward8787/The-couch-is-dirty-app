@@ -3,7 +3,7 @@ import Foundation
 @Observable
 @MainActor
 final class EpisodeCatalog {
-    private(set) var episodes: [Episode] = MockDataService.episodes
+    private(set) var episodes: [Episode] = []
     private(set) var isLoading = false
     private(set) var loadError: String?
 
@@ -11,15 +11,20 @@ final class EpisodeCatalog {
         episodes.first
     }
 
-    func loadFromRSS() async {
+    func loadFromAppwrite() async {
         isLoading = true
         loadError = nil
 
         do {
-            let fetched = try await RSSFeedService.fetchEpisodes()
+            let fetched = try await EpisodeService.fetchPublishedEpisodes()
             episodes = fetched
+            if fetched.isEmpty {
+                loadError = "No published episodes found in Appwrite yet."
+            }
         } catch {
-            loadError = error.localizedDescription
+            // Do not fall back to mock titles like "Ep. 87" — that hides real data issues.
+            episodes = []
+            loadError = "Could not load episodes from Appwrite: \(error.localizedDescription)"
         }
 
         isLoading = false
@@ -27,5 +32,9 @@ final class EpisodeCatalog {
 
     func episode(withID id: UUID) -> Episode? {
         episodes.first { $0.id == id }
+    }
+
+    func episode(withDocumentId documentId: String) -> Episode? {
+        episodes.first { $0.documentId == documentId }
     }
 }

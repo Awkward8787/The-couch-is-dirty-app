@@ -38,7 +38,7 @@ struct MainTabView: View {
             configureTabBarAppearance()
         }
         .task {
-            await catalog.loadFromRSS()
+            await catalog.loadFromAppwrite()
         }
     }
 
