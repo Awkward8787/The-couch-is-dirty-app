@@ -2,32 +2,33 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Environment(AppState.self) private var appState
-    @State private var currentPage = 0
-
-    private let tagline = "Real talk. No filter."
 
     var body: some View {
         ZStack {
             TCIDColors.background.ignoresSafeArea()
 
-            VStack(spacing: TCIDSpacing.lg) {
-                Spacer()
+            VStack(spacing: 0) {
+                Spacer(minLength: TCIDSpacing.xl)
 
                 Image("PodcastLogo")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: 280)
-                    .shadow(color: TCIDColors.accent.opacity(0.3), radius: 40)
+                    .frame(maxWidth: 260)
                     .accessibilityLabel("The Couch Is Dirty Podcast")
 
-                Text(tagline)
-                    .font(TCIDTypography.title)
-                    .foregroundStyle(TCIDColors.textPrimary)
+                Spacer(minLength: TCIDSpacing.lg)
 
-                Rectangle()
-                    .fill(TCIDColors.accent)
-                    .frame(width: 48, height: 3)
-                    .accessibilityHidden(true)
+                VStack(spacing: TCIDSpacing.sm) {
+                    Text("Real talk. No filter.")
+                        .font(TCIDTypography.title)
+                        .foregroundStyle(TCIDColors.textPrimary)
+                        .multilineTextAlignment(.center)
+
+                    Rectangle()
+                        .fill(TCIDColors.accent)
+                        .frame(width: 40, height: 3)
+                        .accessibilityHidden(true)
+                }
 
                 Spacer()
 
@@ -42,17 +43,9 @@ struct OnboardingView: View {
                     }
                 }
                 .padding(.horizontal, TCIDSpacing.lg)
-
-                HStack(spacing: TCIDSpacing.sm) {
-                    ForEach(0..<3, id: \.self) { index in
-                        Circle()
-                            .fill(index == currentPage ? TCIDColors.accent : TCIDColors.textSecondary.opacity(0.4))
-                            .frame(width: 8, height: 8)
-                            .accessibilityLabel(index == currentPage ? "Page \(index + 1), current" : "Page \(index + 1)")
-                    }
-                }
-                .padding(.bottom, TCIDSpacing.lg)
+                .padding(.bottom, TCIDSpacing.xl)
             }
+            .padding(.horizontal, TCIDSpacing.md)
         }
     }
 }

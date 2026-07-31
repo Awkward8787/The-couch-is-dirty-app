@@ -2,7 +2,6 @@ import SwiftUI
 
 struct LaunchScreenView: View {
     @State private var jokeIndex = 0
-    @State private var logoScale: CGFloat = 0.96
     @State private var contentOpacity: Double = 0
 
     private let jokes = [
@@ -18,19 +17,6 @@ struct LaunchScreenView: View {
         ZStack {
             TCIDColors.background.ignoresSafeArea()
 
-            // Soft brand atmosphere — not a flat white flash.
-            RadialGradient(
-                colors: [
-                    TCIDColors.accent.opacity(0.18),
-                    TCIDColors.background.opacity(0),
-                ],
-                center: .center,
-                startRadius: 20,
-                endRadius: 280
-            )
-            .ignoresSafeArea()
-            .opacity(contentOpacity)
-
             VStack(spacing: TCIDSpacing.lg) {
                 Spacer()
 
@@ -38,7 +24,6 @@ struct LaunchScreenView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: 220)
-                    .scaleEffect(logoScale)
                     .accessibilityLabel("The Couch Is Dirty Podcast")
 
                 Spacer()
@@ -55,19 +40,14 @@ struct LaunchScreenView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, TCIDSpacing.xl)
                         .animation(.easeInOut(duration: 0.35), value: jokeIndex)
-                        .accessibilityLabel(jokes[jokeIndex])
                 }
                 .padding(.bottom, TCIDSpacing.xl)
             }
             .opacity(contentOpacity)
         }
         .onAppear {
-            withAnimation(.easeOut(duration: 0.45)) {
+            withAnimation(.easeOut(duration: 0.35)) {
                 contentOpacity = 1
-                logoScale = 1
-            }
-            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
-                logoScale = 1.03
             }
         }
         .task {
