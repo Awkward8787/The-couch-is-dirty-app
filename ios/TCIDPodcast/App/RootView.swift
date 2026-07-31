@@ -26,16 +26,9 @@ struct RootView: View {
         }
         .background(TCIDColors.background.ignoresSafeArea())
         .task {
-            async let minimumHold: Void = {
-                try? await Task.sleep(for: .milliseconds(1600))
-                minimumSplashElapsed = true
-            }()
-
-            if catalog.episodes.isEmpty && !catalog.isLoading {
-                await catalog.loadFromAppwrite()
-            }
-
-            _ = await minimumHold
+            async let splashTimer: Void = waitForMinimumSplash()
+            async let catalogLoad: Void = loadCatalogIfNeeded()
+            _ = await (splashTimer, catalogLoad)
             dismissSplashIfReady()
         }
         .onChange(of: catalog.isLoading) { _, isLoading in
@@ -50,10 +43,20 @@ struct RootView: View {
         }
     }
 
+    private func waitForMinimumSplash() async {
+        try? await Task.sleep(for: .milliseconds(1600))
+        minimumSplashElapsed = true
+    }
+
+    private func loadCatalogIfNeeded() async {
+        if catalog.episodes.isEmpty && !catalog.isLoading {
+            await catalog.loadFromAppwrite()
+        }
+    }
+
     private func dismissSplashIfReady() {
         guard showsLaunchSplash else { return }
         guard minimumSplashElapsed else { return }
-        // Keep splash up until the first catalog attempt finishes (success or error).
         guard !catalog.isLoading else { return }
 
         withAnimation(.easeOut(duration: 0.35)) {
