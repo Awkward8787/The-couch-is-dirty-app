@@ -63,7 +63,7 @@ struct ComposePostView: View {
                             .font(TCIDTypography.title)
                             .foregroundStyle(TCIDColors.textPrimary)
 
-                        Text("Share text, a link, a photo, or a short vertical clip — up to 60 seconds (MP4/MOV, max 30 MB).")
+                        Text("Share text, a link, a vertical photo, or a short clip — 9:16 format, up to 60 seconds (MP4/MOV, max 30 MB). Photos save at up to 1920px.")
                             .font(TCIDTypography.caption)
                             .foregroundStyle(TCIDColors.textSecondary)
 
@@ -207,7 +207,7 @@ struct ComposePostView: View {
                 .resizable()
                 .scaledToFill()
                 .frame(maxWidth: .infinity)
-                .frame(height: 180)
+                .aspectRatio(FeedMediaFormat.aspectRatio, contentMode: .fit)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.md))
 
@@ -230,7 +230,7 @@ struct ComposePostView: View {
                 .resizable()
                 .scaledToFill()
                 .frame(maxWidth: .infinity)
-                .aspectRatio(9 / 16, contentMode: .fit)
+                .aspectRatio(FeedMediaFormat.aspectRatio, contentMode: .fit)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.md))
                 .overlay(alignment: .bottomLeading) {
@@ -316,12 +316,14 @@ struct ComposePostView: View {
     }
 
     private func generateThumbnail(for url: URL) async throws -> UIImage {
-        let asset = AVURLAsset(url: url)
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        let time = CMTime(seconds: 0.5, preferredTimescale: 600)
-        let cgImage = try generator.copyCGImage(at: time, actualTime: nil)
-        return UIImage(cgImage: cgImage)
+        try await Task.detached(priority: .userInitiated) {
+            let asset = AVURLAsset(url: url)
+            let generator = AVAssetImageGenerator(asset: asset)
+            generator.appliesPreferredTrackTransform = true
+            let time = CMTime(seconds: 0.5, preferredTimescale: 600)
+            let cgImage = try generator.copyCGImage(at: time, actualTime: nil)
+            return UIImage(cgImage: cgImage)
+        }.value
     }
 
     private func formatDuration(_ seconds: Int) -> String {

@@ -352,7 +352,7 @@ def ensure_post_images_bucket(api_key: str) -> None:
             "permissions": BUCKET_PERMISSIONS,
             "fileSecurity": True,
             "enabled": True,
-            "maximumFileSize": 2_000_000,
+            "maximumFileSize": 5_000_000,
             "allowedFileExtensions": ["jpg", "jpeg", "png", "webp"],
             "compression": "none",
             "encryption": True,

@@ -143,34 +143,16 @@ struct FeedPostCard: View {
     @ViewBuilder
     private var media: some View {
         if let videoURL = post.videoURL {
-            FeedShortVideoPlayer(url: videoURL) {
+            FeedPostVideoView(url: videoURL) {
                 if playback.isPlaying {
                     playback.toggleCurrentPlayback()
                 }
             }
         } else if let imageURL = post.imageURL {
-            AsyncImage(url: imageURL) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                case .failure:
-                    Color.black.overlay {
-                        Image(systemName: "photo")
-                            .foregroundStyle(TCIDColors.textSecondary)
-                    }
-                default:
-                    TCIDColors.card.overlay { ProgressView().tint(TCIDColors.accent) }
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 220)
-            .clipped()
-            .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.md))
+            FeedPostImageView(url: imageURL)
         }
 
-        if let linkURL = post.linkURL {
+        if let linkURL = post.linkURL, post.videoURL == nil {
             if post.hasPlayableVideoLink {
                 InAppVideoPlayer(url: linkURL)
                     .onAppear {

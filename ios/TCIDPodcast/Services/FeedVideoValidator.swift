@@ -4,9 +4,9 @@ import UniformTypeIdentifiers
 
 /// TikTok-style short video limits for the Home feed.
 enum FeedVideoValidator {
-    static let maxDurationSeconds: TimeInterval = 60
-    static let maxFileBytes = 30_000_000
-    static let allowedExtensions: Set<String> = ["mp4", "mov", "m4v"]
+    static let maxDurationSeconds = FeedMediaFormat.maxVideoDurationSeconds
+    static let maxFileBytes = FeedMediaFormat.maxVideoBytes
+    static let allowedExtensions = FeedMediaFormat.allowedVideoExtensions
 
     struct ValidatedVideo: Sendable {
         let data: Data

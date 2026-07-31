@@ -5,13 +5,10 @@ import JSONCodable
 import UIKit
 
 enum FeedService {
-    /// Soft caps to protect limited Appwrite storage.
-    static let maxImageBytes = 1_200_000
-    static let maxImageDimension: CGFloat = 1280
     static let maxBodyLength = 1200
     static let pageSize = 20
 
-    static func fetchPosts(limit: Int = pageSize, cursorAfter: String? = nil) async throws -> [FeedPost] {
+    static func fetchPosts(limit: Int = 20, cursorAfter: String? = nil) async throws -> [FeedPost] {
         var queries: [String] = [
             Query.orderDesc("$createdAt"),
             Query.limit(limit),
@@ -77,7 +74,7 @@ enum FeedService {
 
         var imageFileId: String?
         if let imageJPEGData, videoFileId == nil {
-            guard imageJPEGData.count <= maxImageBytes else {
+            guard imageJPEGData.count <= FeedMediaFormat.maxImageBytes else {
                 throw FeedServiceError.imageTooLarge
             }
             let file = InputFile.fromData(
@@ -342,23 +339,7 @@ enum FeedService {
     }
 
     static func compressImageForUpload(_ image: UIImage) -> Data? {
-        let longest = max(image.size.width, image.size.height)
-        let scale = longest > maxImageDimension ? maxImageDimension / longest : 1
-        let targetSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-
-        let renderer = UIGraphicsImageRenderer(size: targetSize)
-        let resized = renderer.image { _ in
-            image.draw(in: CGRect(origin: .zero, size: targetSize))
-        }
-
-        var quality: CGFloat = 0.72
-        var data = resized.jpegData(compressionQuality: quality)
-        while let current = data, current.count > maxImageBytes, quality > 0.35 {
-            quality -= 0.1
-            data = resized.jpegData(compressionQuality: quality)
-        }
-        guard let data, data.count <= maxImageBytes else { return nil }
-        return data
+        FeedMediaFormat.prepareImageForUpload(image)
     }
 
     static func isSafeURL(_ url: URL) -> Bool {
