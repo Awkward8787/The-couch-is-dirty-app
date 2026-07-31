@@ -144,14 +144,21 @@ def appwrite_request(
 
 
 def find_existing_by_guid(api_key: str, rss_guid: str) -> str | None:
+    # Appwrite 1.9 query syntax is JSON objects, not the older equal("x", ...) strings.
     result = appwrite_request(
         "GET",
         f"/databases/{DATABASE_ID}/collections/{COLLECTION_ID}/documents",
         api_key,
         query={
             "queries[]": [
-                f'equal("rss_guid", "{rss_guid}")',
-                "limit(1)",
+                json.dumps(
+                    {
+                        "method": "equal",
+                        "attribute": "rss_guid",
+                        "values": [rss_guid],
+                    }
+                ),
+                json.dumps({"method": "limit", "values": [1]}),
             ]
         },
     )
