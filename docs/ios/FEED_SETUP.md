@@ -38,13 +38,16 @@ Or paste the key once in chat and ask Cursor to run:
 python3 scripts/setup_appwrite_feed.py
 ```
 
+This creates/upgrades `posts` (incl. `comment_count`, `is_edited`, `moderation_status`), `post_comments`, and `post-images`.
+
 ### Step 3 — Delete the key
 
-Console → API Keys → delete **`temp-cursor-feed`**.
+Console → API Keys → delete **`temp-cursor-1h`** (or whatever you named it).
 
 ### Step 4 — Test the app
 
-Clean build → Feed tab → sign in → post → pull to refresh.
+Clean build → Feed tab → Be a Guest → composer → post.  
+Manual checklist: [HOME_FEED_TESTS.md](./HOME_FEED_TESTS.md)
 
 ---
 
