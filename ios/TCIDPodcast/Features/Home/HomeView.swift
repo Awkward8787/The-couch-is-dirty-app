@@ -1,149 +1,111 @@
 import SwiftUI
 
 struct HomeView: View {
-    @Environment(AppState.self) private var appState
-    @Environment(PlaybackState.self) private var playback
-    @Environment(EpisodeCatalog.self) private var catalog
+    @Environment(AuthService.self) private var auth
+    @Environment(FeedStore.self) private var feed
+
+    @State private var showsComposer = false
+    @State private var showsLogin = false
 
     var body: some View {
         NavigationStack {
             TCIDScreenContainer {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: TCIDSpacing.xl) {
+                    VStack(alignment: .leading, spacing: TCIDSpacing.lg) {
                         TCIDAppHeader(showsNotificationBadge: false)
 
-                        hero
+                        VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
+                            Text("Couch Feed")
+                                .font(TCIDTypography.largeTitle)
+                                .foregroundStyle(TCIDColors.textPrimary)
+                            Text("Share thoughts, photos, and video links. Keep it light on the server.")
+                                .font(TCIDTypography.caption)
+                                .foregroundStyle(TCIDColors.textSecondary)
+                        }
+                        .padding(.horizontal, TCIDSpacing.md)
+
+                        composerPrompt
                             .padding(.horizontal, TCIDSpacing.md)
 
-                        if let featured = catalog.featuredEpisode {
-                            featuredSection(featured)
-                                .padding(.horizontal, TCIDSpacing.md)
-                        } else if catalog.isLoading {
-                            ProgressView()
+                        if feed.isLoading && feed.posts.isEmpty {
+                            ProgressView("Loading the couch…")
                                 .tint(TCIDColors.accent)
+                                .font(TCIDTypography.caption)
+                                .foregroundStyle(TCIDColors.textSecondary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, TCIDSpacing.lg)
                         }
 
-                        if let continueEpisode, shouldShowContinue(for: continueEpisode) {
-                            continueSection(continueEpisode)
+                        if let loadError = feed.loadError, feed.posts.isEmpty {
+                            Text(loadError)
+                                .font(TCIDTypography.caption)
+                                .foregroundStyle(TCIDColors.destructive)
                                 .padding(.horizontal, TCIDSpacing.md)
                         }
 
-                        BeAGuestPromoCard()
-                            .padding(.horizontal, TCIDSpacing.md)
-
-                        browseEpisodesButton
-                            .padding(.horizontal, TCIDSpacing.md)
-                            .padding(.bottom, TCIDSpacing.xl)
+                        LazyVStack(spacing: TCIDSpacing.md) {
+                            ForEach(feed.posts) { post in
+                                FeedPostCard(post: post)
+                            }
+                        }
+                        .padding(.horizontal, TCIDSpacing.md)
+                        .padding(.bottom, TCIDSpacing.xl)
                     }
                 }
-            }
-        }
-    }
-
-    private var hero: some View {
-        VStack(alignment: .leading, spacing: TCIDSpacing.md) {
-            Text("The Couch Is Dirty")
-                .font(TCIDTypography.largeTitle)
-                .foregroundStyle(TCIDColors.textPrimary)
-                .accessibilityAddTraits(.isHeader)
-
-            Rectangle()
-                .fill(TCIDColors.accent)
-                .frame(width: 40, height: 3)
-                .accessibilityHidden(true)
-
-            Text("Real talk. No filter.")
-                .font(TCIDTypography.body)
-                .foregroundStyle(TCIDColors.textSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, TCIDSpacing.sm)
-    }
-
-    private func featuredSection(_ episode: Episode) -> some View {
-        VStack(alignment: .leading, spacing: TCIDSpacing.md) {
-            TCIDSectionHeader(title: "Now on the Couch", actionTitle: nil)
-
-            NavigationLink {
-                EpisodeDetailView(episode: episode)
-            } label: {
-                NowPlayingCard(
-                    episode: episode,
-                    progress: featuredProgress(for: episode),
-                    elapsedSeconds: featuredElapsed(for: episode),
-                    isPlaying: playback.currentEpisode?.id == episode.id && playback.isPlaying
-                ) {
-                    playback.togglePlayback(for: episode)
+                .refreshable {
+                    await feed.load()
                 }
             }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private func continueSection(_ episode: Episode) -> some View {
-        VStack(alignment: .leading, spacing: TCIDSpacing.md) {
-            TCIDSectionHeader(title: "Continue", actionTitle: nil)
-            ContinueListeningRow(
-                episode: episode,
-                progress: playback.progress
-            ) {
-                playback.togglePlayback(for: episode)
+            .sheet(isPresented: $showsComposer) {
+                ComposePostView()
+            }
+            .sheet(isPresented: $showsLogin) {
+                LoginView()
+            }
+            .task {
+                if feed.posts.isEmpty {
+                    await feed.load()
+                }
             }
         }
     }
 
-    private var browseEpisodesButton: some View {
+    private var composerPrompt: some View {
         Button {
-            appState.selectedTab = .episodes
+            if auth.isAuthenticated {
+                showsComposer = true
+            } else {
+                showsLogin = true
+            }
         } label: {
-            HStack {
-                Text("Browse all episodes")
-                    .font(TCIDTypography.headline)
+            HStack(spacing: TCIDSpacing.md) {
+                Circle()
+                    .fill(TCIDColors.cardElevated)
+                    .frame(width: 40, height: 40)
+                    .overlay {
+                        Image(systemName: "person.fill")
+                            .foregroundStyle(TCIDColors.textSecondary)
+                    }
+
+                Text(auth.isAuthenticated ? "What’s on your mind?" : "Sign in to post on the couch")
+                    .font(TCIDTypography.caption)
+                    .foregroundStyle(TCIDColors.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Image(systemName: "square.and.pencil")
                     .foregroundStyle(TCIDColors.textPrimary)
-                Spacer()
-                Image(systemName: "arrow.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(TCIDColors.accent)
             }
             .padding(TCIDSpacing.md)
-            .frame(minHeight: TCIDSpacing.touchTarget)
-            .overlay(
-                RoundedRectangle(cornerRadius: TCIDRadius.md)
-                    .stroke(TCIDColors.border, lineWidth: 1)
-            )
+            .background(TCIDColors.card)
+            .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
         }
-        .accessibilityHint("Opens the Episodes tab")
-    }
-
-    private var continueEpisode: Episode? {
-        guard
-            let currentEpisode = playback.currentEpisode,
-            playback.progress > 0.02,
-            playback.progress < 0.98
-        else { return nil }
-        return currentEpisode
-    }
-
-    private func shouldShowContinue(for episode: Episode) -> Bool {
-        episode.id != catalog.featuredEpisode?.id || !playback.isPlaying
-    }
-
-    private func featuredProgress(for episode: Episode) -> Double {
-        guard playback.currentEpisode?.id == episode.id else { return 0 }
-        return playback.progress
-    }
-
-    private func featuredElapsed(for episode: Episode) -> Int {
-        guard playback.currentEpisode?.id == episode.id else { return 0 }
-        return playback.elapsedSeconds
+        .buttonStyle(.plain)
+        .accessibilityLabel(auth.isAuthenticated ? "Create a post" : "Sign in to post")
     }
 }
 
 #Preview {
     HomeView()
-        .environment(AppState(hasCompletedOnboarding: true))
-        .environment(PlaybackState())
-        .environment(EpisodeCatalog())
+        .environment(AuthService())
+        .environment(FeedStore())
 }

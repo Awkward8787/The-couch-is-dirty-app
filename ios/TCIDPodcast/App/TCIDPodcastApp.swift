@@ -5,9 +5,10 @@ import UIKit
 struct TCIDPodcastApp: App {
     @State private var appState = AppState()
     @State private var catalog = EpisodeCatalog()
+    @State private var auth = AuthService()
+    @State private var feed = FeedStore()
 
     init() {
-        // Prevent the system window from flashing white before SwiftUI paints.
         UIWindow.appearance().backgroundColor = .black
     }
 
@@ -16,8 +17,13 @@ struct TCIDPodcastApp: App {
             RootView()
                 .environment(appState)
                 .environment(catalog)
+                .environment(auth)
+                .environment(feed)
                 .preferredColorScheme(.dark)
                 .background(TCIDColors.background.ignoresSafeArea())
+                .task {
+                    await auth.restoreSession()
+                }
         }
     }
 }

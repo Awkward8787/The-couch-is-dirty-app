@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @Environment(AuthService.self) private var auth
+    @State private var showsLogin = false
+
     var body: some View {
         NavigationStack {
             TCIDScreenContainer {
@@ -19,20 +22,56 @@ struct ProfileView: View {
                                 }
                                 .accessibilityLabel("Profile photo placeholder")
 
-                            Text("Guest Listener")
+                            Text(auth.isAuthenticated ? auth.displayName : "Guest Listener")
                                 .font(TCIDTypography.title)
                                 .foregroundStyle(TCIDColors.textPrimary)
 
-                            Text("Sign in to join the community, save episodes, and sync progress.")
-                                .font(TCIDTypography.body)
-                                .foregroundStyle(TCIDColors.textSecondary)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, TCIDSpacing.lg)
+                            if auth.isAuthenticated {
+                                Text(auth.currentUser?.email ?? "")
+                                    .font(TCIDTypography.caption)
+                                    .foregroundStyle(TCIDColors.textSecondary)
+                            } else {
+                                Text("Sign in to post on the feed, save episodes, and sync progress.")
+                                    .font(TCIDTypography.body)
+                                    .foregroundStyle(TCIDColors.textSecondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, TCIDSpacing.lg)
+                            }
                         }
                         .padding(.top, TCIDSpacing.md)
 
-                        TCIDPrimaryButton(title: "Sign In") {}
+                        if auth.isRestoringSession {
+                            ProgressView("Restoring session…")
+                                .tint(TCIDColors.accent)
+                        } else if auth.isAuthenticated {
+                            Button {
+                                Task { await auth.signOut() }
+                            } label: {
+                                Text("Sign Out")
+                                    .font(TCIDTypography.headline)
+                                    .foregroundStyle(TCIDColors.textPrimary)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(minHeight: TCIDSpacing.touchTarget)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: TCIDRadius.md)
+                                            .stroke(TCIDColors.border, lineWidth: 1)
+                                    )
+                            }
                             .padding(.horizontal, TCIDSpacing.lg)
+                        } else {
+                            Button {
+                                showsLogin = true
+                            } label: {
+                                Text("Sign In")
+                                    .font(TCIDTypography.headline)
+                                    .foregroundStyle(Color.black)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(minHeight: TCIDSpacing.touchTarget)
+                                    .background(Color.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.md))
+                            }
+                            .padding(.horizontal, TCIDSpacing.lg)
+                        }
 
                         VStack(spacing: 0) {
                             NavigationLink {
@@ -43,12 +82,9 @@ struct ProfileView: View {
                             .buttonStyle(.plain)
 
                             Divider().background(TCIDColors.border)
-
                             profileRow("Saved Episodes", icon: "bookmark")
                             Divider().background(TCIDColors.border)
                             profileRow("Listening History", icon: "clock")
-                            Divider().background(TCIDColors.border)
-                            profileRow("Notification Preferences", icon: "bell")
                             Divider().background(TCIDColors.border)
                             profileRow("Community Guidelines", icon: "doc.text")
                             Divider().background(TCIDColors.border)
@@ -64,6 +100,9 @@ struct ProfileView: View {
                         .padding(.bottom, TCIDSpacing.xl)
                     }
                 }
+            }
+            .sheet(isPresented: $showsLogin) {
+                LoginView()
             }
         }
     }
@@ -95,4 +134,5 @@ struct ProfileView: View {
 
 #Preview {
     ProfileView()
+        .environment(AuthService())
 }
