@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Home tab = community feed only. Episodes live on the Episodes tab.
 struct HomeView: View {
     @Environment(AuthService.self) private var auth
     @Environment(FeedStore.self) private var feed
@@ -14,6 +15,16 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: TCIDSpacing.md) {
                         TCIDAppHeader(showsNotificationBadge: false)
 
+                        VStack(alignment: .leading, spacing: TCIDSpacing.xs) {
+                            Text("Feed")
+                                .font(TCIDTypography.largeTitle)
+                                .foregroundStyle(TCIDColors.textPrimary)
+                            Text("Community posts only — updated as people share. Episodes are on the Episodes tab.")
+                                .font(TCIDTypography.caption)
+                                .foregroundStyle(TCIDColors.textSecondary)
+                        }
+                        .padding(.horizontal, TCIDSpacing.md)
+
                         composerPrompt
                             .padding(.horizontal, TCIDSpacing.md)
 
@@ -26,6 +37,7 @@ struct HomeView: View {
                     await feed.load()
                 }
             }
+            .navigationBarHidden(true)
             .sheet(isPresented: $showsComposer) {
                 ComposePostView()
             }
@@ -58,7 +70,7 @@ struct HomeView: View {
                 Text(loadError)
                     .font(TCIDTypography.caption)
                     .foregroundStyle(TCIDColors.destructive)
-                Text("Create the Appwrite `posts` table + `post-images` bucket (docs/ios/FEED_SETUP.md), then pull to refresh.")
+                Text("Pull to refresh after Appwrite `posts` is set up.")
                     .font(TCIDTypography.caption)
                     .foregroundStyle(TCIDColors.textSecondary)
             }
@@ -67,12 +79,13 @@ struct HomeView: View {
             .clipShape(RoundedRectangle(cornerRadius: TCIDRadius.lg))
         } else if feed.posts.isEmpty {
             VStack(spacing: TCIDSpacing.sm) {
-                Text("No posts yet")
+                Text("No posts yet today")
                     .font(TCIDTypography.headline)
                     .foregroundStyle(TCIDColors.textPrimary)
-                Text("Be the first to share on the couch today.")
+                Text("This feed stays empty until someone posts. Be the first.")
                     .font(TCIDTypography.caption)
                     .foregroundStyle(TCIDColors.textSecondary)
+                    .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, TCIDSpacing.xl)
