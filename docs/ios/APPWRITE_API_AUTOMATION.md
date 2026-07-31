@@ -43,7 +43,27 @@ If your Console groups scopes (e.g. “Databases”, “Storage”, “Users”,
 
 ## Hand the key to Cursor
 
-**Option A — env var (best)**
+### Recommended: Cursor Secrets tab (persistent across runs)
+
+Agents **cannot** create dashboard secrets for you. Add them here:
+
+1. Open [cursor.com/dashboard/cloud-agents](https://cursor.com/dashboard/cloud-agents)
+2. Open **Environments** (or the **Secrets** tab)
+3. Select the environment used for **The-couch-is-dirty-app** (create one if this repo has none yet)
+4. Add secrets (prefer **Runtime Secret** so values stay redacted in chat):
+
+| Name | Value | Type |
+|------|-------|------|
+| `APPWRITE_API_KEY` | your `temp-cursor-1h` (or rotated) secret | Runtime Secret |
+| `APPWRITE_ENDPOINT` | `https://api.tcidpodcast.com/v1` | Environment Variable |
+| `APPWRITE_PROJECT_ID` | `tcidpodcast` | Environment Variable |
+| `APPWRITE_DATABASE_ID` | `episodes` | Environment Variable |
+
+5. Save → start a **new** Cloud Agent run (existing runs won’t pick up new secrets)
+
+Then say: *“Use APPWRITE_API_KEY from env — run feed setup.”*
+
+### Option A — env var in this workspace (current session only)
 
 ```bash
 export APPWRITE_API_KEY='PASTE_KEY_HERE'
@@ -54,7 +74,7 @@ export APPWRITE_DATABASE_ID='episodes'
 
 Then say: *“API key is exported — run feed setup.”*
 
-**Option B — paste once in chat**
+### Option B — paste once in chat
 
 Say: *“Use this `temp-cursor-1h` key for this hour, then remind me to delete it:”* and paste the secret.
 
