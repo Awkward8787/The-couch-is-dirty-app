@@ -6,6 +6,7 @@ struct ProfileView: View {
     @Environment(AuthService.self) private var auth
     @Environment(UserLibraryStore.self) private var library
     @Environment(BlockedUsersStore.self) private var blockedUsers
+    @Environment(\.openURL) private var openURL
 
     @State private var showsLogin = false
     @State private var selectedPhoto: PhotosPickerItem?
@@ -59,6 +60,11 @@ struct ProfileView: View {
 
                         TCIDSectionGroup(title: "Community") {
                             profileLink("Be a Guest", icon: "mic.fill", accent: true) { BeAGuestView() }
+                        }
+                        .padding(.horizontal, TCIDSpacing.md)
+
+                        TCIDSectionGroup(title: "Creator") {
+                            CreatorDashboardLink(style: .profileRow)
                         }
                         .padding(.horizontal, TCIDSpacing.md)
 
@@ -119,19 +125,20 @@ struct ProfileView: View {
                         .font(TCIDTypography.caption)
                         .foregroundStyle(TCIDColors.textSecondary)
 
-                    #if DEBUG
-                    if auth.communityRole == .admin {
-                        Link(destination: AppConfig.adminDashboardURL) {
+                    if auth.communityRole.canModerate {
+                        Button {
+                            openURL(AppConfig.adminDashboardURL)
+                        } label: {
                             HStack(spacing: 4) {
-                                Text("Admin Dashboard")
+                                Text("\(auth.communityRole.badgeTitle) · Open Dashboard")
                                 Image(systemName: "arrow.up.right")
                                     .font(.caption2.weight(.semibold))
                             }
                             .font(TCIDTypography.caption.weight(.medium))
                             .foregroundStyle(TCIDColors.accent)
                         }
+                        .accessibilityLabel("Open creator dashboard")
                     }
-                    #endif
                 } else {
                     Text("Sign in to post, save episodes, and sync progress.")
                         .font(TCIDTypography.body)
@@ -264,3 +271,4 @@ struct ProfileView: View {
         .environment(UserLibraryStore())
         .environment(BlockedUsersStore())
 }
+

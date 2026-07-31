@@ -101,9 +101,13 @@ struct LoginView: View {
                         .disabled(auth.isSubmitting || email.isEmpty || password.isEmpty)
                         .opacity(auth.isSubmitting || email.isEmpty || password.isEmpty ? 0.5 : 1)
 
+                        creatorDashboardFooter
+
                         #if DEBUG
                         if intent == .administrator {
-                            adminDashboardSection
+                            Text("After sign-in, Safari opens the dashboard automatically.")
+                                .font(TCIDTypography.caption)
+                                .foregroundStyle(TCIDColors.textSecondary)
                         }
                         #endif
                     }
@@ -201,35 +205,18 @@ struct LoginView: View {
         #endif
     }
 
-    #if DEBUG
-    private var adminDashboardSection: some View {
+    private var creatorDashboardFooter: some View {
         VStack(alignment: .leading, spacing: TCIDSpacing.sm) {
             Divider().background(TCIDColors.border)
 
-            Text("Creator dashboard")
+            Text("Creator access")
                 .font(TCIDTypography.caption.weight(.semibold))
                 .foregroundStyle(TCIDColors.textSecondary)
 
-            Text("Manage episodes, feed, and RSS sync in the web admin dashboard (opens in Safari).")
-                .font(TCIDTypography.caption)
-                .foregroundStyle(TCIDColors.textSecondary)
-
-            Button {
-                openURL(AppConfig.adminDashboardURL)
-            } label: {
-                HStack(spacing: 6) {
-                    Text("Open Admin Dashboard")
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption.weight(.semibold))
-                }
-                .font(TCIDTypography.body.weight(.medium))
-                .foregroundStyle(TCIDColors.accent)
-            }
-            .accessibilityLabel("Open admin dashboard in Safari")
+            CreatorDashboardLink(style: .compact)
         }
         .padding(.top, TCIDSpacing.sm)
     }
-    #endif
 
     private func clearCredentials() {
         email = ""
