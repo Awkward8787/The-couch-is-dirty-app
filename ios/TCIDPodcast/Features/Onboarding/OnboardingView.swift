@@ -13,7 +13,8 @@ struct OnboardingView: View {
                 Image("PodcastLogo")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 220, height: 220)
+                    .frame(maxWidth: 260)
+                    .padding(.horizontal, 32)
                     .accessibilityLabel("The Couch Is Dirty Podcast")
 
                 Spacer()
