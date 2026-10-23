@@ -41,3 +41,6 @@ supabase/.temp
 # Test artifacts
 coverage/
 *.log
+Thumbs.db
+*.swp
+*~

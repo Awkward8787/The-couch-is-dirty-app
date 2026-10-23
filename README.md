@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/banner.png" alt="The Couch Is Dirty Podcast" width="100%">
+  <img src="assets/banner.png" alt="The Couch Is Dirty Podcast" width="100%">
 </p>
 
 # The Couch Is Dirty Podcast
@@ -12,6 +12,18 @@
 ![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
 
 Production-ready monorepo for the **The Couch Is Dirty Podcast** iPhone app, creator admin dashboard, and Supabase backend.
+
+
+## How it works
+
+```mermaid
+flowchart LR
+  iOS[SwiftUI iPhone app] --> SB[(Supabase)]
+  Admin[Next.js creator admin] --> SB
+  SB --> Media[Episodes / guests / content]
+```
+
+Monorepo: iOS app, creator admin, Supabase backend for The Couch Is Dirty Podcast.
 
 | Property | Value |
 |----------|-------|
