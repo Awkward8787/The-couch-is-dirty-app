@@ -1,4 +1,15 @@
+<p align="center">
+  <img src="docs/banner.png" alt="The Couch Is Dirty Podcast" width="100%">
+</p>
+
 # The Couch Is Dirty Podcast
+
+**Monorepo for the TCID Podcast iPhone app, creator admin dashboard, and Supabase backend.**
+
+[![License: All Rights Reserved](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)](#license)
+![Swift](https://img.shields.io/badge/Swift-F05138?logo=swift&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)
 
 Production-ready monorepo for the **The Couch Is Dirty Podcast** iPhone app, creator admin dashboard, and Supabase backend.
 
